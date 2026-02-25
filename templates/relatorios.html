@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Relatórios - CateControl{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="icon">⛪</div>
+        <div>
+            <h1>CateControl</h1>
+            <p>Gestão de Catequese</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a class="nav-item" href="/admin"><span class="nav-icon">📊</span> Dashboard</a>
+        <a class="nav-item" href="/admin/pessoas"><span class="nav-icon">👥</span> Pessoas</a>
+        <a class="nav-item" href="/admin/cadastrar"><span class="nav-icon">➕</span> Cadastrar</a>
+        <a class="nav-item active" href="/admin/relatorios"><span class="nav-icon">📋</span> Relatórios</a>
+        <a class="nav-item" href="/"><span class="nav-icon">📷</span> Leitor QR</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="admin-info">
+            <div class="admin-avatar">👤</div>
+            <div><span>Admin</span><small>Administrador</small></div>
+            <button class="logout-btn" onclick="window.location='/logout'">⏻</button>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="page-header">
+        <h2>📋 Relatórios</h2>
+        <p>Consulte o histórico de entradas e saídas por pessoa</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-6">
+        <h3 style="font-weight:700;margin-bottom:16px">Filtrar Relatório</h3>
+        <div class="flex gap-3 items-center" style="flex-wrap:wrap">
+            <div class="search-bar" style="flex:1;min-width:200px">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchPessoa" placeholder="Nome ou código da pessoa..." oninput="buscarPessoa()">
+            </div>
+            <div>
+                <label style="font-size:12px;font-weight:600;color:#6B6490;display:block;margin-bottom:4px">De</label>
+                <input type="date" id="dataInicio" style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:Sora,sans-serif;font-size:14px;outline:none">
+            </div>
+            <div>
+                <label style="font-size:12px;font-weight:600;color:#6B6490;display:block;margin-bottom:4px">Até</label>
+                <input type="date" id="dataFim" style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:Sora,sans-serif;font-size:14px;outline:none">
+            </div>
+        </div>
+        <!-- Sugestões -->
+        <div id="sugestoes" style="margin-top:12px;display:none">
+            <div id="listaSugestoes" class="flex gap-2" style="flex-wrap:wrap"></div>
+        </div>
+    </div>
+
+    <!-- Resultado -->
+    <div id="resultado" style="display:none">
+        <div class="card mb-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 style="font-weight:700;font-size:20px" id="relNome"></h3>
+                    <p class="mono text-muted" id="relCodigo"></p>
+                </div>
+                <div class="flex gap-3">
+                    <div style="text-align:center;padding:12px 20px;background:#E8FFF5;border-radius:12px">
+                        <div style="font-size:24px;font-weight:700;color:#16a34a" id="totalEntradas">0</div>
+                        <div style="font-size:12px;color:#6B6490">Entradas</div>
+                    </div>
+                    <div style="text-align:center;padding:12px 20px;background:#FFF0F0;border-radius:12px">
+                        <div style="font-size:24px;font-weight:700;color:#dc2626" id="totalSaidas">0</div>
+                        <div style="font-size:12px;color:#6B6490">Saídas</div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="exportarCSV()">⬇ CSV</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Tipo</th>
+                            <th>Autorização</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyRelatorio">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="emptyState" class="card" style="text-align:center;padding:60px">
+        <div style="font-size:56px;margin-bottom:16px">📊</div>
+        <h3 style="font-weight:700;margin-bottom:8px">Busque uma pessoa para ver o relatório</h3>
+        <p class="text-muted">Digite o nome ou código acima para começar</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let codigoAtual = '';
+let dadosRel = null;
+
+async function buscarPessoa() {
+    const q = document.getElementById('searchPessoa').value.trim();
+    if (q.length < 2) { document.getElementById('sugestoes').style.display = 'none'; return; }
+    
+    const pessoas = await api(`/api/admin/pessoas?q=${encodeURIComponent(q)}`);
+    const lista = document.getElementById('listaSugestoes');
+    lista.innerHTML = pessoas.slice(0, 8).map(p => `
+        <button onclick="selecionarPessoa('${p.codigo}')" 
+                style="padding:8px 14px;background:#EEF2FF;border:2px solid #E4DFFF;border-radius:10px;
+                       font-family:Sora,sans-serif;font-size:13px;cursor:pointer;font-weight:600;
+                       color:#4F35D2;transition:all 0.2s"
+                onmouseover="this.style.background='#4F35D2';this.style.color='white'"
+                onmouseout="this.style.background='#EEF2FF';this.style.color='#4F35D2'">
+            ${p.nome} <span style="opacity:0.5;font-size:11px">${p.codigo}</span>
+        </button>
+    `).join('');
+    document.getElementById('sugestoes').style.display = 'block';
+}
+
+async function selecionarPessoa(codigo) {
+    codigoAtual = codigo;
+    document.getElementById('sugestoes').style.display = 'none';
+    await gerarRelatorio();
+}
+
+async function gerarRelatorio() {
+    if (!codigoAtual) return;
+    const inicio = document.getElementById('dataInicio').value;
+    const fim = document.getElementById('dataFim').value;
+    let url = `/api/admin/relatorio/${codigoAtual}`;
+    const params = [];
+    if (inicio) params.push(`inicio=${inicio}`);
+    if (fim) params.push(`fim=${fim}`);
+    if (params.length) url += '?' + params.join('&');
+
+    dadosRel = await api(url);
+    
+    document.getElementById('relNome').textContent = dadosRel.pessoa.nome;
+    document.getElementById('relCodigo').textContent = dadosRel.pessoa.codigo + ' — ' + (dadosRel.pessoa.tipo === 'crianca' ? 'Criança' : 'Responsável');
+    document.getElementById('totalEntradas').textContent = dadosRel.total_entradas;
+    document.getElementById('totalSaidas').textContent = dadosRel.total_saidas;
+    document.getElementById('searchPessoa').value = dadosRel.pessoa.nome;
+
+    const tbody = document.getElementById('tbodyRelatorio');
+    if (!dadosRel.registros.length) {
+        tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state">Nenhum registro no período selecionado.</div></td></tr>';
+    } else {
+        tbody.innerHTML = dadosRel.registros.map(r => `
+            <tr>
+                <td><span class="mono">${r.horario}</span></td>
+                <td><span class="badge badge-${r.tipo}">${r.tipo === 'entrada' ? '✅ Entrada' : '👋 Saída'}</span></td>
+                <td>${r.autorizado_por ? `👨 ${r.autorizado_por}` : '—'}</td>
+            </tr>
+        `).join('');
+    }
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultado').style.display = 'block';
+}
+
+function exportarCSV() {
+    if (!dadosRel) return;
+    const linhas = [['Data/Hora', 'Tipo', 'Autorizado Por']];
+    dadosRel.registros.forEach(r => linhas.push([r.horario, r.tipo, r.autorizado_por || '']));
+    const csv = linhas.map(l => l.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `relatorio_${codigoAtual}.csv`; a.click();
+    showToast('CSV exportado!', 'success');
+}
+
+document.getElementById('dataInicio').addEventListener('change', () => { if (codigoAtual) gerarRelatorio(); });
+document.getElementById('dataFim').addEventListener('change', () => { if (codigoAtual) gerarRelatorio(); });
+
+// Data padrão: início do mês
+const hoje = new Date();
+document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+document.getElementById('dataInicio').value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+</script>
+{% endblock %}

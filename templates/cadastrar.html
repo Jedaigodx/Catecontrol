@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Cadastrar - CateControl{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="icon">⛪</div>
+        <div>
+            <h1>CateControl</h1>
+            <p>Gestão de Catequese</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a class="nav-item" href="/admin"><span class="nav-icon">📊</span> Dashboard</a>
+        <a class="nav-item" href="/admin/pessoas"><span class="nav-icon">👥</span> Pessoas</a>
+        <a class="nav-item active" href="/admin/cadastrar"><span class="nav-icon">➕</span> Cadastrar</a>
+        <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">📋</span> Relatórios</a>
+        <a class="nav-item" href="/"><span class="nav-icon">📷</span> Leitor QR</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="admin-info">
+            <div class="admin-avatar">👤</div>
+            <div><span>Admin</span><small>Administrador</small></div>
+            <button class="logout-btn" onclick="window.location='/logout'">⏻</button>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="page-header">
+        <h2>➕ Novo Cadastro</h2>
+        <p>Cadastre uma nova pessoa no sistema</p>
+    </div>
+
+    <div style="max-width:680px">
+        <div class="card" style="margin-bottom:20px">
+            <h3 style="font-weight:700;margin-bottom:16px">Tipo de Cadastro</h3>
+            <div class="flex gap-3">
+                <button class="tipo-btn active" id="btnCrianca" onclick="setTipo('crianca')">
+                    <span style="font-size:28px">🧒</span>
+                    <span style="font-weight:700;display:block;margin-top:6px">Criança / Catequizando</span>
+                    <small style="opacity:0.6">Código terminado em -00</small>
+                </button>
+                <button class="tipo-btn" id="btnResponsavel" onclick="setTipo('responsavel')">
+                    <span style="font-size:28px">👨</span>
+                    <span style="font-weight:700;display:block;margin-top:6px">Responsável / Pai</span>
+                    <small style="opacity:0.6">Código terminado em -01</small>
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="font-weight:700;margin-bottom:20px">Dados Pessoais</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nome Completo *</label>
+                    <input type="text" id="nome" placeholder="Nome da pessoa">
+                </div>
+                <div class="form-group">
+                    <label>Data de Nascimento</label>
+                    <input type="date" id="dtNasc">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Telefone / WhatsApp</label>
+                    <input type="tel" id="telefone" placeholder="(11) 99999-9999">
+                </div>
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="email" placeholder="email@exemplo.com">
+                </div>
+            </div>
+            
+            <!-- Responsável - só mostra para criança -->
+            <div id="responsavelGroup" class="form-group">
+                <label>👨 Responsável pela Criança</label>
+                <select id="responsavel">
+                    <option value="">— Selecione (opcional, mas recomendado) —</option>
+                </select>
+                <p style="font-size:12px;color:#6B6490;margin-top:6px">⚠️ Se vinculado, a saída da criança exigirá o QR Code do responsável.</p>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="cadastrar()">
+                ✅ Cadastrar e Gerar QR Code
+            </button>
+        </div>
+
+        <!-- Resultado -->
+        <div class="card" id="resultadoCadastro" style="display:none;text-align:center">
+            <div style="font-size:48px;margin-bottom:12px">🎉</div>
+            <h3 style="font-weight:700;font-size:20px;margin-bottom:4px" id="resNome"></h3>
+            <p class="mono text-muted" style="margin-bottom:16px" id="resCodigo"></p>
+            <p style="font-size:13px;color:#6B6490;margin-bottom:16px">QR Code gerado com sucesso! Entregue ao participante.</p>
+            <img id="resQR" style="border-radius:12px;border:4px solid #E4DFFF;max-width:220px;margin:0 auto;display:block">
+            <div class="flex gap-2" style="margin-top:20px;justify-content:center">
+                <button class="btn btn-primary" onclick="imprimirQR()">🖨️ Imprimir QR</button>
+                <button class="btn btn-outline" onclick="novoCadastro()">➕ Novo Cadastro</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+.tipo-btn {
+    flex: 1; padding: 20px; border-radius: 14px;
+    border: 2px solid #E4DFFF; background: white;
+    cursor: pointer; text-align: center;
+    transition: all 0.2s; font-family: 'Sora', sans-serif;
+    color: #1A1535;
+}
+.tipo-btn.active {
+    border-color: #4F35D2; background: #EEF2FF;
+    box-shadow: 0 4px 16px rgba(79,53,210,0.15);
+}
+.tipo-btn:hover { border-color: #4F35D2; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let tipoSelecionado = 'crianca';
+let responsaveis = [];
+
+async function init() {
+    responsaveis = await api('/api/admin/responsaveis');
+    const sel = document.getElementById('responsavel');
+    sel.innerHTML = '<option value="">— Selecione (opcional, mas recomendado) —</option>' +
+        responsaveis.map(r => `<option value="${r.codigo}">${r.nome} (${r.codigo})</option>`).join('');
+}
+
+function setTipo(tipo) {
+    tipoSelecionado = tipo;
+    document.getElementById('btnCrianca').classList.toggle('active', tipo === 'crianca');
+    document.getElementById('btnResponsavel').classList.toggle('active', tipo === 'responsavel');
+    document.getElementById('responsavelGroup').style.display = tipo === 'crianca' ? 'block' : 'none';
+}
+
+async function cadastrar() {
+    const nome = document.getElementById('nome').value.trim();
+    if (!nome) { showToast('Informe o nome da pessoa.', 'error'); return; }
+
+    const body = {
+        nome,
+        tipo: tipoSelecionado,
+        telefone: document.getElementById('telefone').value,
+        email: document.getElementById('email').value,
+        data_nascimento: document.getElementById('dtNasc').value,
+        responsavel_codigo: tipoSelecionado === 'crianca' ? document.getElementById('responsavel').value : null
+    };
+
+    const data = await api('/api/admin/pessoas', { method: 'POST', body: JSON.stringify(body) });
+    if (data.success) {
+        // Buscar QR
+        const qrData = await api(`/api/admin/qrcode/${data.codigo}`);
+        document.getElementById('resNome').textContent = data.pessoa.nome;
+        document.getElementById('resCodigo').textContent = data.codigo;
+        document.getElementById('resQR').src = 'data:image/png;base64,' + qrData.qr;
+        document.getElementById('resultadoCadastro').style.display = 'block';
+        document.getElementById('resultadoCadastro').scrollIntoView({ behavior: 'smooth' });
+        showToast('Cadastro realizado!', 'success');
+    }
+}
+
+function novoCadastro() {
+    document.getElementById('resultadoCadastro').style.display = 'none';
+    document.getElementById('nome').value = '';
+    document.getElementById('telefone').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('dtNasc').value = '';
+    document.getElementById('nome').focus();
+}
+function imprimirQR() {
+    const nome = document.getElementById('resNome').textContent;
+    const codigo = document.getElementById('resCodigo').textContent;
+    const src = document.getElementById('resQR').src;
+    const tipoRaw = document.getElementById('resTipo').textContent;
+
+    const tipo = tipoRaw === 'crianca'
+        ? 'CRIANÇA'
+        : tipoRaw === 'responsavel'
+            ? 'RESPONSÁVEL'
+            : tipoRaw.toUpperCase();
+
+    const win = window.open('', '_blank');
+
+    win.document.write(`
+    <html>
+    <head>
+        <title>Crachá</title>
+        <style>
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            body {
+                margin: 0;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-family: Arial, sans-serif;
+                background: white;
+            }
+
+            .card {
+                width: 60mm;
+                height: 90mm;
+                border: 3px solid #4F35D2;
+                border-radius: 12px;
+                padding: 10mm;
+                text-align: center;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .header {
+                font-weight: bold;
+                font-size: 14pt;
+                color: #4F35D2;
+            }
+
+            .tipo {
+                font-size: 9pt;
+                font-weight: bold;
+                background: #4F35D2;
+                color: white;
+                padding: 3px 10px;
+                border-radius: 15px;
+                margin-top: 4px;
+            }
+
+            .qr img {
+                width: 40mm;
+                height: 40mm;
+            }
+
+            .nome {
+                font-size: 12pt;
+                font-weight: bold;
+                margin-top: 5px;
+            }
+
+            .codigo {
+                font-family: monospace;
+                font-size: 10pt;
+                margin-top: 3px;
+                letter-spacing: 1px;
+            }
+
+            .footer {
+                font-size: 8pt;
+                color: #666;
+                margin-top: 5px;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="card">
+            <div>
+                <div class="header">CateControl</div>
+                <div class="tipo">${tipo}</div>
+            </div>
+
+            <div class="qr">
+                <img src="${src}">
+            </div>
+
+            <div>
+                <div class="codigo">${codigo}</div>
+                <div class="nome">${nome}</div>
+            </div>
+
+            <div class="footer">
+                Apresente este crachá no leitor<br>
+                Entrada e saída
+            </div>
+        </div>
+
+        <script>
+            window.onload = () => window.print();
+        <\/script>
+
+    </body>
+    </html>
+    `);
+
+    win.document.close();
+}
+
+init();
+setTipo('crianca');
+</script>
+{% endblock %}

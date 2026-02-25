@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}Pessoas - CateControl{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="icon">⛪</div>
+        <div>
+            <h1>CateControl</h1>
+            <p>Gestão de Catequese</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a class="nav-item" href="/admin"><span class="nav-icon">📊</span> Dashboard</a>
+        <a class="nav-item active" href="/admin/pessoas"><span class="nav-icon">👥</span> Pessoas</a>
+        <a class="nav-item" href="/admin/cadastrar"><span class="nav-icon">➕</span> Cadastrar</a>
+        <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">📋</span> Relatórios</a>
+        <a class="nav-item" href="/"><span class="nav-icon">📷</span> Leitor QR</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="admin-info">
+            <div class="admin-avatar">👤</div>
+            <div><span>Admin</span><small>Administrador</small></div>
+            <button class="logout-btn" onclick="window.location='/logout'">⏻</button>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="page-header flex items-center justify-between">
+        <div>
+            <h2>👥 Pessoas Cadastradas</h2>
+            <p>Gerencie os catequizandos e responsáveis</p>
+        </div>
+        <a href="/admin/cadastrar" class="btn btn-primary">➕ Novo Cadastro</a>
+    </div>
+
+    <div class="card">
+        <div class="flex items-center justify-between mb-4">
+            <div class="search-bar" style="flex:1;max-width:400px">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Buscar por nome ou código..." id="search" oninput="buscar()">
+            </div>
+            <div class="flex gap-2">
+                <select id="filtroTipo" onchange="buscar()" style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:Sora,sans-serif;font-size:14px;outline:none;cursor:pointer">
+                    <option value="">Todos</option>
+                    <option value="crianca">Crianças</option>
+                    <option value="responsavel">Responsáveis</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table id="tabelaPessoas">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Telefone</th>
+                        <th>Responsável</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyPessoas">
+                    <tr><td colspan="6" class="empty-state">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>✏️ Editar Pessoa</h3>
+            <button class="modal-close" onclick="fecharModal()">✕</button>
+        </div>
+        <input type="hidden" id="editId">
+        <div class="form-row">
+            <div class="form-group"><label>Nome Completo</label><input type="text" id="editNome"></div>
+            <div class="form-group"><label>Telefone</label><input type="text" id="editTelefone"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>E-mail</label><input type="email" id="editEmail"></div>
+            <div class="form-group"><label>Data de Nascimento</label><input type="date" id="editDtNasc"></div>
+        </div>
+        <div class="form-group" id="groupResponsavel">
+            <label>Código do Responsável</label>
+            <select id="editResponsavel" style="width:100%;padding:11px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:Sora,sans-serif;font-size:14px;outline:none">
+                <option value="">— Nenhum —</option>
+            </select>
+        </div>
+        <div class="flex gap-2" style="margin-top:8px">
+            <button class="btn btn-primary" style="flex:1" onclick="salvarEdicao()">💾 Salvar</button>
+            <button class="btn btn-outline" onclick="fecharModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal QR Code -->
+<div class="modal-overlay" id="modalQR">
+    <div class="modal" style="text-align:center">
+        <div class="modal-header">
+            <h3>📱 QR Code</h3>
+            <button class="modal-close" onclick="fecharModalQR()">✕</button>
+        </div>
+        <p id="qrNome" style="font-weight:700;font-size:18px;margin-bottom:4px"></p>
+        <p id="qrCodigo" class="mono text-muted" style="margin-bottom:20px"></p>
+        <img id="qrImg" style="border-radius:12px;border:4px solid #E4DFFF;max-width:250px">
+        <div style="margin-top:16px">
+            <button class="btn btn-primary" onclick="imprimirQR()">🖨️ Imprimir</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let todasPessoas = [];
+let responsaveis = [];
+
+async function carregarPessoas() {
+    todasPessoas = await api('/api/admin/pessoas');
+    responsaveis = await api('/api/admin/responsaveis');
+    renderizar(todasPessoas);
+}
+
+function renderizar(pessoas) {
+    const tbody = document.getElementById('tbodyPessoas');
+    if (!pessoas.length) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>Nenhuma pessoa encontrada</p></div></td></tr>';
+        return;
+    }
+    tbody.innerHTML = pessoas.map(p => `
+        <tr>
+            <td><span class="mono" style="font-weight:700;color:#4F35D2">${p.codigo}</span></td>
+            <td><strong>${p.nome}</strong></td>
+            <td><span class="badge badge-${p.tipo}">${p.tipo === 'crianca' ? '🧒 Criança' : '👨 Responsável'}</span></td>
+            <td>${p.telefone || '—'}</td>
+            <td>${p.responsavel_codigo ? `<span class="mono">${p.responsavel_codigo}</span>` : '—'}</td>
+            <td>
+                <div class="flex gap-2">
+                    <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome}')">📱 QR</button>
+                    <button class="btn btn-sm btn-primary" onclick="abrirEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>
+                    <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome}')">🗑️</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function buscar() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const tipo = document.getElementById('filtroTipo').value;
+    const filtradas = todasPessoas.filter(p => {
+        const matchQ = !q || p.nome.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q);
+        const matchT = !tipo || p.tipo === tipo;
+        return matchQ && matchT;
+    });
+    renderizar(filtradas);
+}
+
+function abrirEditar(p) {
+    document.getElementById('editId').value = p.id;
+    document.getElementById('editNome').value = p.nome;
+    document.getElementById('editTelefone').value = p.telefone || '';
+    document.getElementById('editEmail').value = p.email || '';
+    document.getElementById('editDtNasc').value = p.data_nascimento || '';
+    
+    const selResp = document.getElementById('editResponsavel');
+    selResp.innerHTML = '<option value="">— Nenhum —</option>' + 
+        responsaveis.map(r => `<option value="${r.codigo}" ${r.codigo === p.responsavel_codigo ? 'selected' : ''}>${r.nome} (${r.codigo})</option>`).join('');
+    
+    document.getElementById('groupResponsavel').style.display = p.tipo === 'crianca' ? 'block' : 'none';
+    document.getElementById('modalEditar').classList.add('open');
+}
+
+function fecharModal() { document.getElementById('modalEditar').classList.remove('open'); }
+
+async function salvarEdicao() {
+    const id = document.getElementById('editId').value;
+    await api(`/api/admin/pessoas/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            nome: document.getElementById('editNome').value,
+            telefone: document.getElementById('editTelefone').value,
+            email: document.getElementById('editEmail').value,
+            data_nascimento: document.getElementById('editDtNasc').value,
+            responsavel_codigo: document.getElementById('editResponsavel').value
+        })
+    });
+    showToast('Dados atualizados!', 'success');
+    fecharModal();
+    carregarPessoas();
+}
+
+async function deletar(id, nome) {
+    if (!confirm(`Desativar "${nome}"? Esta pessoa não poderá mais usar o sistema.`)) return;
+    await api(`/api/admin/pessoas/${id}`, { method: 'DELETE' });
+    showToast(`${nome} desativado(a).`, 'info');
+    carregarPessoas();
+}
+
+async function abrirQR(codigo, nome) {
+    document.getElementById('qrNome').textContent = nome;
+    document.getElementById('qrCodigo').textContent = codigo;
+    document.getElementById('modalQR').classList.add('open');
+    const data = await api(`/api/admin/qrcode/${codigo}`);
+    document.getElementById('qrImg').src = 'data:image/png;base64,' + data.qr;
+}
+
+function fecharModalQR() { document.getElementById('modalQR').classList.remove('open'); }
+
+function imprimirQR() {
+    const win = window.open('', '_blank');
+    const nome = document.getElementById('qrNome').textContent;
+    const codigo = document.getElementById('qrCodigo').textContent;
+    const src = document.getElementById('qrImg').src;
+    win.document.write(`<html><body style="text-align:center;font-family:sans-serif;padding:40px">
+        <h2>${nome}</h2><p>${codigo}</p>
+        <img src="${src}" style="width:200px"><br>
+        <button onclick="window.print()" style="margin-top:20px;padding:10px 30px">Imprimir</button>
+    </body></html>`);
+}
+
+carregarPessoas();
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CateControl</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4F35D2;
+            --primary-dark: #3B27A8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Sora', sans-serif;
+            background: linear-gradient(135deg, #1A1535 0%, #2d1b8a 50%, #4F35D2 100%);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-box {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            width: 400px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+        }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo .icon { font-size: 48px; margin-bottom: 8px; }
+        .logo h1 { font-size: 24px; font-weight: 700; color: var(--primary); }
+        .logo p { color: #6B6490; font-size: 13px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #6B6490; margin-bottom: 6px; }
+        .form-group input {
+            width: 100%; padding: 12px 16px;
+            border: 2px solid #E4DFFF; border-radius: 12px;
+            font-family: 'Sora', sans-serif; font-size: 14px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .form-group input:focus { border-color: var(--primary); }
+        .btn-login {
+            width: 100%; padding: 14px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 12px;
+            font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: background 0.2s;
+            margin-top: 8px;
+        }
+        .btn-login:hover { background: var(--primary-dark); }
+        .error-msg { color: #dc2626; font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+        .reader-link {
+            text-align: center; margin-top: 20px;
+            font-size: 13px; color: #6B6490;
+        }
+        .reader-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="logo">
+            <div class="icon">⛪</div>
+            <h1>CateControl</h1>
+            <p>Sistema de Gestão de Catequese</p>
+        </div>
+        <div class="form-group">
+            <label>Usuário</label>
+            <input type="text" id="username" placeholder="admin" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label>Senha</label>
+            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn-login" onclick="login()">Entrar no Painel</button>
+        <p class="error-msg" id="errorMsg">Usuário ou senha incorretos.</p>
+        <div class="reader-link">
+            <a href="/">← Ir para o leitor de QR Code</a>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = '/admin';
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
