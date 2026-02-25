@@ -1,79 +1,173 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CateControl</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --primary: #4F35D2;
-            --primary-dark: #3B27A8;
+            --primary: #0f6be4;
+            --primary-dark: #0856bb;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: 'Sora', sans-serif;
-            background: linear-gradient(135deg, #1A1535 0%, #2d1b8a 50%, #4F35D2 100%);
+            font-family: 'Josefin Sans', sans-serif;
+            background: linear-gradient(rgba(255, 255, 255, 1), rgb(161, 161, 161));
             min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
         .login-box {
-            background: white;
+            background: rgba(255, 255, 255, 0.589);
             border-radius: 24px;
-            padding: 48px 40px;
-            width: 400px;
-            box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+            padding: 65px 40px;
+            width: 450px;
+            box-shadow: 0 24px 80px rgba(170, 170, 170, 0.658);
         }
-        .logo { text-align: center; margin-bottom: 32px; }
-        .logo .icon { font-size: 48px; margin-bottom: 8px; }
-        .logo h1 { font-size: 24px; font-weight: 700; color: var(--primary); }
-        .logo p { color: #6B6490; font-size: 13px; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #6B6490; margin-bottom: 6px; }
+
+        .logo {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin-bottom: 55px;
+        }
+
+        .logo .caixa_de_marca {
+            display: block;
+            text-align: center;
+            font: bolder;
+        }
+
+        .logo .icon {
+            font-size: 50px;
+        }
+
+        .logo h1 {
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo p {
+            color: #6B6490;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6B6490;
+            margin-bottom: 6px;
+        }
+
         .form-group input {
-            width: 100%; padding: 12px 16px;
-            border: 2px solid #E4DFFF; border-radius: 12px;
-            font-family: 'Sora', sans-serif; font-size: 14px;
-            outline: none; transition: border-color 0.2s;
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #E4DFFF;
+            border-radius: 12px;
+            font-family: 'Sora', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
         }
-        .form-group input:focus { border-color: var(--primary); }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+        }
+
         .btn-login {
-            width: 100%; padding: 14px;
-            background: var(--primary); color: white;
-            border: none; border-radius: 12px;
-            font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700;
-            cursor: pointer; transition: background 0.2s;
+            padding: 14px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
             margin-top: 8px;
         }
-        .btn-login:hover { background: var(--primary-dark); }
-        .error-msg { color: #dc2626; font-size: 13px; text-align: center; margin-top: 12px; display: none; }
-        .reader-link {
-            text-align: center; margin-top: 20px;
-            font-size: 13px; color: #6B6490;
+
+        .btn-login:hover {
+            background: var(--primary-dark);
         }
-        .reader-link a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+        .error-msg {
+            text-transform: uppercase;
+            color: #dc2626;
+            font: bolder;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 12px;   
+            display: none;
+        }
+
+        .reader-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #6B6490;
+        }
+
+        .reader-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .btns_login {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
+
 <body>
     <div class="login-box">
         <div class="logo">
-            <div class="icon">⛪</div>
-            <h1>CateControl</h1>
-            <p>Sistema de Gestão de Catequese</p>
+            <div class="icon">
+                &#x1F514;
+            </div>
+            <div class="caixa_de_marca">
+                <h1>CATECONTROL</h1>
+                <p>Sistema de Gestão de Catequese</p>
+            </div>
         </div>
         <div class="form-group">
-            <label>Usuário</label>
+            <label for="username">USUARIO</label>
             <input type="text" id="username" placeholder="admin" autocomplete="username">
         </div>
         <div class="form-group">
-            <label>Senha</label>
+            <label for="password">SENHA</label>
             <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
         </div>
-        <button class="btn-login" onclick="login()">Entrar no Painel</button>
-        <p class="error-msg" id="errorMsg">Usuário ou senha incorretos.</p>
-        <div class="reader-link">
-            <a href="/">← Ir para o leitor de QR Code</a>
+        <div class="btns_login">
+            <button class="btn-login" onclick="login()">Entrar no Painel</button>
+            <div class="reader-link">
+                <a href="/">← Leitor de QR Code</a>
+            </div>
         </div>
+        <p class="error-msg" id="errorMsg">Usuário ou senha incorretos.</p>
     </div>
     <script>
         document.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
@@ -94,4 +188,5 @@
         }
     </script>
 </body>
+
 </html>

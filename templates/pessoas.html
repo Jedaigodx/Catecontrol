@@ -4,9 +4,9 @@
 {% block body %}
 <div class="sidebar">
     <div class="sidebar-brand">
-        <div class="icon">⛪</div>
+        <div class="icon">&#X1F514;</div>
         <div>
-            <h1>CateControl</h1>
+            <h1>CATECONTROL</h1>
             <p>Gestão de Catequese</p>
         </div>
     </div>
@@ -29,10 +29,10 @@
 <div class="main-content">
     <div class="page-header flex items-center justify-between">
         <div>
-            <h2>👥 Pessoas Cadastradas</h2>
+            <h2>Pessoas Cadastradas</h2>
             <p>Gerencie os catequizandos e responsáveis</p>
         </div>
-        <a href="/admin/cadastrar" class="btn btn-primary">➕ Novo Cadastro</a>
+        <a href="/admin/cadastrar" class="btn btn-primary" style="text-decoration: none;">➕ Novo Cadastro</a>
     </div>
 
     <div class="card">
@@ -103,12 +103,14 @@
 <div class="modal-overlay" id="modalQR">
     <div class="modal" style="text-align:center">
         <div class="modal-header">
-            <h3>📱 QR Code</h3>
+            <h3>📱 QR CODE</h3>
             <button class="modal-close" onclick="fecharModalQR()">✕</button>
         </div>
-        <p id="qrNome" style="font-weight:700;font-size:18px;margin-bottom:4px"></p>
-        <p id="qrCodigo" class="mono text-muted" style="margin-bottom:20px"></p>
-        <img id="qrImg" style="border-radius:12px;border:4px solid #E4DFFF;max-width:250px">
+        <div style="border:2px solid #777777;">
+            <p id="qrNome" style="font-weight:700;font-size:18px;margin-bottom:4px; text-transform: capitalize; margin-top: 20px;"></p>
+            <p id="qrCodigo" class="mono" style="margin-bottom:10px"></p>
+            <img id="qrImg" style="max-width:250px; color: red">
+        </div>
         <div style="margin-top:16px">
             <button class="btn btn-primary" onclick="imprimirQR()">🖨️ Imprimir</button>
         </div>
@@ -129,6 +131,7 @@ async function carregarPessoas() {
 
 function renderizar(pessoas) {
     const tbody = document.getElementById('tbodyPessoas');
+    
     if (!pessoas.length) {
         tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>Nenhuma pessoa encontrada</p></div></td></tr>';
         return;
@@ -136,15 +139,15 @@ function renderizar(pessoas) {
     tbody.innerHTML = pessoas.map(p => `
         <tr>
             <td><span class="mono" style="font-weight:700;color:#4F35D2">${p.codigo}</span></td>
-            <td><strong>${p.nome}</strong></td>
+            <td><strong style="text-transform: capitalize">${p.nome}</strong></td>
             <td><span class="badge badge-${p.tipo}">${p.tipo === 'crianca' ? '🧒 Criança' : '👨 Responsável'}</span></td>
             <td>${p.telefone || '—'}</td>
             <td>${p.responsavel_codigo ? `<span class="mono">${p.responsavel_codigo}</span>` : '—'}</td>
             <td>
                 <div class="flex gap-2">
-                    <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome}')">📱 QR</button>
-                    <button class="btn btn-sm btn-primary" onclick="abrirEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>
-                    <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome}')">🗑️</button>
+                    <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome}')">Ver QRCode</button>
+                    <button class="btn btn-sm btn-primary" onclick="abrirEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})">&#x1F4DD; </button>
+                    <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome}')">&#x1F5D9;</button>
                 </div>
             </td>
         </tr>

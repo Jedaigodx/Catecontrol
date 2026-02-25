@@ -1,92 +1,153 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leitor QR - CateControl</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
+        rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <style>
         :root {
-            --primary: #4F35D2;
-            --accent: #22D9A0;
-            --accent-red: #FF6B6B;
-            --accent-yellow: #FFD166;
+            --primary: #0f6be4;
+            --primary-dark: #0856bb;
+            --accent: #028f15;
+            --accent-red: #ff0000;
+            --accent-yellow: #ffb300;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: 'Sora', sans-serif;
-            background: linear-gradient(160deg, #0f0c29 0%, #1A1535 40%, #2d1b8a 100%);
+            font-family: 'Josefin Sans', sans-serif;
+            /* background: linear-gradient(160deg, #0f0c29 0%, #1A1535 40%, #2d1b8a 100%); */
+            background: linear-gradient(rgba(255, 255, 255, 1), rgb(161, 161, 161));
             min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             padding: 24px;
             color: white;
         }
+
         .header {
-            width: 100%; max-width: 800px;
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 32px;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .brand { display: flex; align-items: center; gap: 10px; }
-        .brand .icon { font-size: 28px; }
-        .brand h1 { font-size: 20px; font-weight: 700; }
-        .brand p { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand .icon {
+            font-size: 40px;
+        }
+
+        .brand h1 {
+            font-size: 20px;
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        .brand p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            color: var(--primary);
+        }
+
         .admin-link {
-            padding: 8px 18px; border-radius: 10px;
-            background: rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.7);
-            text-decoration: none; font-size: 13px; font-weight: 600;
+            padding: 16px 18px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
             transition: background 0.2s;
         }
-        .admin-link:hover { background: rgba(255,255,255,0.2); }
+
+        .admin-link:hover {
+            background: var(--primary-dark);
+        }
 
         .reader-container {
-            width: 100%; max-width: 480px;
+            width: 100%;
+            max-width: 480px;
         }
-        .scanner-box {
-            background: rgba(255,255,255,0.05);
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 24px;
+
+        .scanner-box-input {
+            background: rgb(255, 255, 255);
+            border: 2px solid white;
             padding: 24px;
             margin-bottom: 20px;
             backdrop-filter: blur(10px);
         }
+
+        .scanner-box {
+            background: var(--primary-dark);
+            padding: 16px;
+        }
+
         .scanner-title {
             text-align: center;
-            font-size: 16px; font-weight: 600;
+            font-size: 18px;
+            font-weight: 600;
             margin-bottom: 20px;
-            color: rgba(255,255,255,0.8);
+            color: var(--primary);
         }
+
         #qr-reader {
             border-radius: 16px;
             overflow: hidden;
         }
-        #qr-reader video { border-radius: 12px !important; }
-        
+
+        #qr-reader video {
+            border-radius: 12px !important;
+        }
+
         /* Manual input */
         .manual-input {
-            display: flex; gap: 8px; margin-top: 16px;
+            display: flex;
+            margin-top: 16px;
         }
+
         .manual-input input {
-            flex: 1; padding: 12px 14px;
-            background: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 12px;
-            color: white; font-family: 'JetBrains Mono', monospace;
-            font-size: 14px; outline: none;
+            flex: 1;
+            padding: 12px 14px;
+            font-family: 'Josefin Sans', monospace;
+            background-color: rgba(128, 128, 128, 0.459);
+            font-size: 14px;
+            outline: none;
             transition: border-color 0.2s;
         }
-        .manual-input input::placeholder { color: rgba(255,255,255,0.3); }
-        .manual-input input:focus { border-color: var(--accent); }
+
         .manual-input button {
             padding: 12px 18px;
-            background: var(--primary); color: white;
-            border: none; border-radius: 12px;
-            font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700;
-            cursor: pointer; transition: background 0.2s;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-family: 'Sora', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
             white-space: nowrap;
         }
-        .manual-input button:hover { background: #3B27A8; }
+
+        .manual-input button:hover {
+            background: #0856bb;
+        }
 
         /* Result */
         .result-card {
@@ -96,82 +157,193 @@
             animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             display: none;
         }
-        .result-card.entrada { background: linear-gradient(135deg, #0f4c2e 0%, #16a34a 100%); border: 2px solid var(--accent); }
-        .result-card.saida { background: linear-gradient(135deg, #4c0f0f 0%, #dc2626 100%); border: 2px solid var(--accent-red); }
-        .result-card.error { background: linear-gradient(135deg, #2a1f00 0%, #d97706 100%); border: 2px solid var(--accent-yellow); }
-        .result-card.espera { background: linear-gradient(135deg, #1f1f40 0%, #4F35D2 100%); border: 2px solid rgba(255,255,255,0.3); }
-        @keyframes popIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+
+        .result-card.entrada {
+            background: var(--accent);
         }
-        .result-icon { font-size: 52px; margin-bottom: 12px; }
-        .result-nome { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-        .result-codigo { font-family: 'JetBrains Mono', monospace; font-size: 14px; opacity: 0.7; margin-bottom: 8px; }
-        .result-horario { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: white; }
-        .result-tipo { font-size: 16px; font-weight: 600; margin-bottom: 8px; opacity: 0.9; }
-        .result-msg { font-size: 13px; opacity: 0.7; margin-top: 8px; }
+
+        .result-card.saida {
+            background: var(--accent-red);
+        }
+
+        .result-card.error {
+            background: var(--accent-yellow);
+        }
+
+        .result-card.espera {
+            background: linear-gradient(135deg, #1f1f40 0%, #4F35D2 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .result-icon {
+            font-size: 52px;
+            margin-bottom: 12px;
+        }
+
+        .result-nome {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .result-codigo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .result-horario {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: white;
+        }
+
+        .result-tipo {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .result-msg {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 8px;
+        }
 
         /* Responsável pending */
         .resp-pending {
             background: rgba(79, 53, 210, 0.3);
             border: 2px solid var(--primary);
-            border-radius: 20px; padding: 24px;
-            text-align: center; display: none;
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            display: none;
         }
-        .resp-pending h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-        .resp-pending p { font-size: 13px; opacity: 0.7; margin-bottom: 16px; }
+
+        .resp-pending h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .resp-pending p {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-bottom: 16px;
+        }
+
         .cancel-btn {
             padding: 8px 20px;
-            background: rgba(255,255,255,0.1); color: white;
-            border: 1px solid rgba(255,255,255,0.2); border-radius: 10px;
-            font-family: 'Sora', sans-serif; font-size: 13px;
-            cursor: pointer; margin-top: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-family: 'Sora', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 8px;
         }
 
         /* Atividade recente */
         .atividade {
             margin-top: 20px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px; padding: 20px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            box-shadow: 0px 20px 40px black;
+            padding: 50px 20px;
         }
-        .atividade h3 { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 14px; }
+
+        .atividade h3 {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
         .ativ-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             font-size: 13px;
         }
-        .ativ-item:last-child { border-bottom: none; }
-        .ativ-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .dot-entrada { background: var(--accent); }
-        .dot-saida { background: var(--accent-red); }
-        .ativ-nome { flex: 1; }
-        .ativ-time { color: rgba(255,255,255,0.4); font-size: 11px; }
+
+        .ativ-item:last-child {
+            border-bottom: none;
+        }
+
+        .ativ-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .dot-entrada {
+            background: var(--accent);
+        }
+
+        .dot-saida {
+            background: var(--accent-red);
+        }
+
+        .dot-nome-entrada {
+            color: var(--accent);
+        }
+
+        .dot-nome-saida {
+            color: var(--accent-red);
+        }
+
+        .ativ-nome {
+            flex: 1;
+            text-transform: capitalize;
+        }
+
+        .ativ-time {
+            color: black;
+            font-size: 11px;
+            font: bold;
+            text-decoration: underline;
+            font-style: italic;
+        }
+
+        .ativ-tipo {
+            text-transform: capitalize;
+        }
     </style>
 </head>
+
 <body>
     <div class="header">
         <div class="brand">
-            <span class="icon">⛪</span>
+            <span class="icon">&#x1F514;</span>
             <div>
-                <h1>CateControl</h1>
-                <p>Registro de Presença</p>
+                <h1>CATECONTROL</h1>
+                <p>Gestão de Controle</p>
             </div>
         </div>
         <a href="/login" class="admin-link">🔐 Admin</a>
     </div>
 
     <div class="reader-container">
-        <div class="scanner-box">
-            <div class="scanner-title">📷 Aproxime o QR Code da câmera</div>
-            <div id="qr-reader"></div>
-            <div class="manual-input">
-                <input type="text" id="manualCode" placeholder="Ou digite o código manualmente..." 
-                       onkeypress="if(event.key==='Enter') registrarManual()">
-                <button onclick="registrarManual()">Registrar</button>
-            </div>
-        </div>
-
         <!-- Resultado normal -->
         <div class="result-card" id="resultCard">
             <div class="result-icon" id="resultIcon"></div>
@@ -193,7 +365,16 @@
 
         <!-- Atividade recente -->
         <div class="atividade">
-            <h3>📋 Atividade Recente</h3>
+            <div class="scanner-box-input">
+                <div class="scanner-title">📷 Aproxime o QR Code da câmera</div>
+                <div id="qr-reader"></div>
+                <div class="manual-input">
+                    <input type="text" id="manualCode" placeholder="Ou digite o código manualmente..."
+                        onkeypress="if(event.key==='Enter') registrarManual()">
+                    <button onclick="registrarManual()">Registrar</button>
+                </div>
+            </div>
+            <h3 class="atividade-title">&#x1F536; Atividade Recente</h3>
             <div id="atividadeList"></div>
         </div>
     </div>
@@ -206,7 +387,7 @@
 
         // QR Scanner
         const html5QrCode = new Html5Qrcode("qr-reader");
-        
+
         html5QrCode.start(
             { facingMode: "environment" },
             { fps: 5, qrbox: { width: 250, height: 250 } },
@@ -284,7 +465,7 @@
                 }, 4000);
 
                 carregarAtividade();
-            } catch(e) {
+            } catch (e) {
                 processando = false;
             }
         }
@@ -312,8 +493,8 @@
             list.innerHTML = data.map(r => `
                 <div class="ativ-item">
                     <span class="ativ-dot ${r.tipo === 'entrada' ? 'dot-entrada' : 'dot-saida'}"></span>
-                    <span class="ativ-nome">${r.pessoa_nome}</span>
-                    <span style="font-size:11px; opacity:0.5; margin-right:6px">${r.tipo}</span>
+                    <span class="ativ-nome ${r.tipo == 'entrada' ? 'dot-nome-entrada' : 'dot-nome-saida'}">${r.pessoa_nome}</span>
+                    <span class="ativ-tipo ${r.tipo == 'entrada' ? 'dot-nome-entrada' : 'dot-nome-saida'}">${r.tipo}</span>
                     <span class="ativ-time">${r.horario.split(' ')[1]}</span>
                 </div>
             `).join('') || '<p style="opacity:0.4;font-size:13px">Nenhum registro ainda.</p>';
@@ -323,4 +504,5 @@
         setInterval(carregarAtividade, 15000);
     </script>
 </body>
+
 </html>

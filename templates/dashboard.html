@@ -4,15 +4,15 @@
 {% block body %}
 <div class="sidebar">
     <div class="sidebar-brand">
-        <div class="icon">⛪</div>
+        <div class="icon">&#X1F514;</div>
         <div>
-            <h1>CateControl</h1>
+            <h1>CATECONTROL</h1>
             <p>Gestão de Catequese</p>
         </div>
     </div>
     <nav class="sidebar-nav">
         <a class="nav-item active" href="/admin"><span class="nav-icon">📊</span> Dashboard</a>
-        <a class="nav-item" href="/admin/pessoas"><span class="nav-icon">👥</span> Pessoas</a>
+        <a class="nav-item" href="/admin/pessoas"><span class="nav-icon">&#X1F464;</span> Pessoas</a>
         <a class="nav-item" href="/admin/cadastrar"><span class="nav-icon">➕</span> Cadastrar</a>
         <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">📋</span> Relatórios</a>
         <a class="nav-item" href="/"><span class="nav-icon">📷</span> Leitor QR</a>
@@ -29,7 +29,7 @@
 <div class="main-content">
     <div class="page-header flex items-center justify-between">
         <div>
-            <h2>Dashboard — Visão Geral</h2>
+            <h2>DASHBOARD — VISÃO GERAL</h2>
             <p>Acompanhe as estatísticas de presença em tempo real</p>
         </div>
         <div class="flex gap-2 items-center">
@@ -135,14 +135,17 @@ async function carregarDashboard() {
     const list = document.getElementById('atividadeList');
     list.innerHTML = data.atividade.map(r => {
         const mins = Math.floor((Date.now() - new Date(r.horario.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1')).getTime()) / 60000);
+        var time = r.horario.split(' ')[1];
+        var time = time.split(':');
+        var format = time[0] + ':' + time[1] + 'h';
         return `
         <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F0EDFF">
             <span style="width:8px;height:8px;border-radius:50%;background:${r.tipo==='entrada'?'#22D9A0':'#FF6B6B'};flex-shrink:0"></span>
             <div style="flex:1">
-                <div style="font-size:14px;font-weight:600">${r.pessoa_nome} <span class="mono" style="font-size:11px;color:#6B6490">— ${r.pessoa_codigo}</span></div>
-                <div style="font-size:12px;color:#6B6490">${r.tipo === 'entrada' ? 'Entrada registrada' : 'Saída registrada'}</div>
+                <div style="text-transform: capitalize;font-size:16px;font-weight: 600; color: ${r.tipo==='entrada' ? '#22D9A0' : '#FF6B6B'}">${r.pessoa_nome}</div>
+                <div style="font-size:12px;color:#6B6490"><small><strong>${r.tipo === 'entrada' ? 'Entrada registrada' : 'Saída registrada'}— ${r.pessoa_codigo}</strong></small></div>
             </div>
-            <span style="font-size:11px;color:#6B6490">${r.horario.split(' ')[1]}</span>
+            <span style="font-size:11px;color:#6B6490; font: 800; font-style: italic"><small>${r.horario.split(' ')[0]}</small> - <strong>${format}</strong></span>
         </div>`;
     }).join('') || '<p class="text-muted">Nenhum registro hoje.</p>';
 }
