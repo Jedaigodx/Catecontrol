@@ -45,7 +45,8 @@
                 <select id="filtroTipo" onchange="buscar()"
                     style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none;cursor:pointer">
                     <option value="">Todos</option>
-                    <option value="crianca">Crianças</option>
+                    <option value="catequizando">Catequizandos</option>
+                    <option value="adulto">Adultos</option>
                     <option value="responsavel">Responsáveis</option>
                 </select>
             </div>
@@ -153,6 +154,11 @@ async function carregarDados() {
     renderizar(todasPessoas);
 }
 
+function tipoIcone(tipo) {
+    const mapa = { catequizando: '🧒 Catequizando', adulto: '🧑 Adulto', responsavel: '👨 Responsável' };
+    return mapa[tipo] || tipo;
+}
+
 function renderizar(pessoas) {
     const tbody = document.getElementById('tbodyPessoas');
 
@@ -173,9 +179,9 @@ function renderizar(pessoas) {
         return `<tr>
             <td><span class="mono" style="font-weight:700;color:#0f6be4">${p.codigo}</span></td>
             <td><strong style="text-transform:capitalize">${p.nome}</strong></td>
-            <td><span class="badge badge-${p.tipo}">${p.tipo === 'crianca' ? '🧒 Criança' : '👨 Responsável'}</span></td>
-            <td>${p.tipo === 'crianca' ? turmaLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
-            <td>${p.tipo === 'crianca' ? catLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
+            <td><span class="badge badge-${p.tipo}">${tipoIcone(p.tipo)}</span></td>
+            <td>${p.tipo !== 'responsavel' ? turmaLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
+            <td>${p.tipo !== 'responsavel' ? catLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
             <td>${p.telefone || '—'}</td>
             <td>
                 <div class="flex gap-2">
@@ -208,7 +214,7 @@ function abrirEditar(p) {
     document.getElementById('editDtNasc').value = p.data_nascimento || '';
 
     const grupoExtra = document.getElementById('groupCrianca');
-    if (p.tipo === 'crianca') {
+    if (p.tipo === 'catequizando' || p.tipo === 'adulto') {
         grupoExtra.style.display = 'block';
 
         document.getElementById('editTurma').value = p.turma || '';
