@@ -1,6 +1,113 @@
 {% extends "base.html" %}
 {% block title %}Cadastrar - CateControl{% endblock %}
 
+{% block head %}
+<style>
+    /* ── Tabs ── */
+    .tabs-nav {
+        display: flex;
+        gap: 4px;
+        background: #f0f4ff;
+        border-radius: 14px;
+        padding: 6px;
+        margin-bottom: 24px;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 10px;
+        font-family: 'Josefin Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        background: transparent;
+        color: #6B6490;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .tab-btn.active {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 14px rgba(15, 107, 228, 0.35);
+    }
+
+    .tab-btn:hover:not(.active) {
+        background: rgba(15, 107, 228, 0.08);
+        color: var(--primary);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Tipo seletor (criança/responsável) ── */
+    .tipo-btn {
+        flex: 1;
+        padding: 28px 16px;
+        border-radius: 12px;
+        border: 2px solid #E4DFFF;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+        font-family: 'Josefin Sans', sans-serif;
+        color: white;
+    }
+
+    .tipo-btn.crianca  { background: #d97706; }
+    .tipo-btn.responsavel { background: var(--primary); }
+
+    .tipo-btn.active {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    .tipo-btn:hover { transform: translateY(-4px); }
+
+    /* ── Lista de catequistas ── */
+    .catequista-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid #E4DFFF;
+        margin-bottom: 8px;
+        background: #f8f9ff;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        transition: background 0.15s;
+    }
+
+    .catequista-item:hover { background: #eef2ff; }
+
+    .catequista-item .del-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        color: #dc2626;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: background 0.15s;
+    }
+
+    .catequista-item .del-btn:hover { background: #fee2e2; }
+
+    .empty-cat {
+        text-align: center;
+        padding: 32px;
+        color: #adadad;
+        font-size: 13px;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="sidebar">
     <div class="sidebar-brand">
@@ -29,200 +136,358 @@
 <div class="main-content">
     <div class="page-header">
         <h2>NOVO CADASTRO</h2>
-        <p>Cadastre uma nova pessoa no sistema</p>
+        <p>Cadastre crianças, responsáveis ou gerencie catequistas de pátio</p>
     </div>
 
-    <div style="max-width:680px; margin: 50px auto 0 auto;">
-        <div class="card" style="margin-bottom:20px">
-            <h3 style="font-weight:700;margin-bottom:16px">Tipo de Cadastro</h3>
-            <div class="flex gap-3">
-                <button class="tipo-btn crianca active" id="btnCrianca" onclick="setTipo('crianca')">
-                    <span style="font-size:28px">🧒</span>
-                    <span style="font-weight:700;display:block;margin-top:6px">Criança / Catequizando</span>
-                    <small style="opacity:0.6">Código terminado em -00</small>
-                </button>
-                <button class="tipo-btn responsavel" id="btnResponsavel" onclick="setTipo('responsavel')">
-                    <span style="font-size:28px">👨</span>
-                    <span style="font-weight:700;display:block;margin-top:6px">Responsável / Pai</span>
-                    <small style="opacity:0.6">Código terminado em -01</small>
-                </button>
-            </div>
-        </div>
+    <div style="max-width:700px; margin: 0 auto;">
 
-        <div class="card">
-            <h3 style="font-weight:700;margin-bottom:20px">Dados Pessoais</h3>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Nome Completo *</label>
-                    <input type="text" id="nome" placeholder="Nome da pessoa">
-                </div>
-                <div class="form-group">
-                    <label>Data de Nascimento</label>
-                    <input type="date" id="dtNasc">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Telefone / WhatsApp</label>
-                    <input type="tel" id="telefone" placeholder="(11) 99999-9999">
-                </div>
-                <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" id="email" placeholder="email@exemplo.com">
-                </div>
-            </div>
-
-            <!-- Responsável - só mostra para criança -->
-            <div id="responsavelGroup" class="form-group">
-                <label>👨 Responsável pela Criança</label>
-                <select id="responsavel">
-                    <option value="">— Selecione (opcional, mas recomendado) —</option>
-                </select>
-                <p style="font-size:12px;color:#6B6490;margin-top:6px">⚠️ Se vinculado, a saída da criança exigirá o QR
-                    Code do responsável.</p>
-            </div>
-
-            <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="cadastrar()">
-                ✅ Cadastrar e Gerar QR Code
+        <!-- Tabs de navegação -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" id="tabBtnCrianca" onclick="trocarAba('crianca')">
+                🧒 Criança / Catequizando
+            </button>
+            <button class="tab-btn" id="tabBtnResponsavel" onclick="trocarAba('responsavel')">
+                👨 Responsável
+            </button>
+            <button class="tab-btn" id="tabBtnCatequista" onclick="trocarAba('catequista')">
+                🏫 Catequistas de Pátio
             </button>
         </div>
 
-        <!-- Resultado -->
-        <div class="card" id="resultadoCadastro" style="display:none;text-align:center">
-            <div style="font-size:48px;margin-bottom:12px">🎉</div>
-            <h3 style="font-weight:700;font-size:20px;margin-bottom:4px" id="resNome"></h3>
-            <p class="mono text-muted" style="margin-bottom:16px" id="resCodigo"></p>
-            <p style="font-size:13px;color:#6B6490;margin-bottom:16px">QR Code gerado com sucesso! Entregue ao
-                participante.</p>
-            <img id="resQR"
-                style="border-radius:12px;border:4px solid #E4DFFF;max-width:220px;margin:0 auto;display:block">
-            <div class="flex gap-2" style="margin-top:20px;justify-content:center">
-                <button class="btn btn-primary" onclick="imprimirQR()">🖨️ Imprimir QR</button>
-                <button class="btn btn-outline" onclick="novoCadastro()">➕ Novo Cadastro</button>
+        <!-- ══════ ABA: CRIANÇA ══════ -->
+        <div class="tab-panel active" id="panelCrianca">
+            <div class="card">
+                <h3 style="font-weight:700;margin-bottom:20px">🧒 Dados da Criança / Catequizando</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome Completo *</label>
+                        <input type="text" id="c_nome" placeholder="Nome da criança">
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Nascimento</label>
+                        <input type="date" id="c_dtNasc">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Telefone / WhatsApp</label>
+                        <input type="tel" id="c_telefone" placeholder="(11) 99999-9999">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input type="email" id="c_email" placeholder="email@exemplo.com">
+                    </div>
+                </div>
+
+                <!-- TURMA (novo) -->
+                <div class="form-group">
+                    <label>🏷️ Turma *</label>
+                    <input type="text" id="c_turma" placeholder="Ex: 1º Ano, Crisma, Pré-Eucaristia...">
+                </div>
+
+                <!-- RESPONSÁVEL -->
+                <div class="form-group">
+                    <label>👨 Responsável pela Criança</label>
+                    <select id="c_responsavel">
+                        <option value="">— Selecione (opcional, mas recomendado) —</option>
+                    </select>
+                    <p style="font-size:12px;color:#6B6490;margin-top:6px">
+                        ⚠️ Se vinculado, a saída da criança exigirá o QR Code do responsável.
+                    </p>
+                </div>
+
+                <!-- Catequista Responsável (novo) -->
+                <div class="form-group">
+                    <label>🏫 Catequista Responsável <span style="font-weight:400;color:#adadad">(opcional)</span></label>
+                    <select id="c_catequista_patio">
+                        <option value="">— Nenhum —</option>
+                    </select>
+                    <p style="font-size:12px;color:#6B6490;margin-top:6px">
+                        Gerencie os catequistas de pátio na aba "Catequistas de Pátio".
+                    </p>
+                </div>
+
+                <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="cadastrarCrianca()">
+                    ✅ Cadastrar Criança e Gerar QR Code
+                </button>
+            </div>
+
+            <!-- Resultado do cadastro -->
+            <div class="card" id="resultadoCrianca" style="display:none;text-align:center;margin-top:20px">
+                <div style="font-size:48px;margin-bottom:12px">🎉</div>
+                <h3 style="font-weight:700;font-size:20px;margin-bottom:4px" id="resNomeCrianca"></h3>
+                <p class="mono text-muted" style="margin-bottom:4px" id="resCodigoCrianca"></p>
+                <p style="font-size:13px;color:#6B6490;margin-bottom:16px" id="resTurmaCrianca"></p>
+                <img id="resQRCrianca" style="border-radius:12px;border:4px solid #E4DFFF;max-width:220px;margin:0 auto;display:block">
+                <div class="flex gap-2" style="margin-top:20px;justify-content:center">
+                    <button class="btn btn-primary" onclick="imprimirQR('resNomeCrianca','resCodigoCrianca','resQRCrianca')">🖨️ Imprimir QR</button>
+                    <button class="btn btn-outline" onclick="limparResultado('resultadoCrianca','c_nome','c_telefone','c_email','c_dtNasc','c_turma')">➕ Nova Criança</button>
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- ══════ ABA: RESPONSÁVEL ══════ -->
+        <div class="tab-panel" id="panelResponsavel">
+            <div class="card">
+                <h3 style="font-weight:700;margin-bottom:20px">👨 Dados do Responsável / Pai</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome Completo *</label>
+                        <input type="text" id="r_nome" placeholder="Nome do responsável">
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Nascimento</label>
+                        <input type="date" id="r_dtNasc">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Telefone / WhatsApp</label>
+                        <input type="tel" id="r_telefone" placeholder="(11) 99999-9999">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input type="email" id="r_email" placeholder="email@exemplo.com">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;background:#d97706;border-color:#d97706" onclick="cadastrarResponsavel()">
+                    ✅ Cadastrar Responsável e Gerar QR Code
+                </button>
+            </div>
+
+            <div class="card" id="resultadoResponsavel" style="display:none;text-align:center;margin-top:20px">
+                <div style="font-size:48px;margin-bottom:12px">🎉</div>
+                <h3 style="font-weight:700;font-size:20px;margin-bottom:4px" id="resNomeResp"></h3>
+                <p class="mono text-muted" style="margin-bottom:16px" id="resCodigoResp"></p>
+                <img id="resQRResp" style="border-radius:12px;border:4px solid #E4DFFF;max-width:220px;margin:0 auto;display:block">
+                <div class="flex gap-2" style="margin-top:20px;justify-content:center">
+                    <button class="btn btn-primary" onclick="imprimirQR('resNomeResp','resCodigoResp','resQRResp')">🖨️ Imprimir QR</button>
+                    <button class="btn btn-outline" onclick="limparResultado('resultadoResponsavel','r_nome','r_telefone','r_email','r_dtNasc')">➕ Novo Responsável</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════ ABA: CATEQUISTAS DE PÁTIO ══════ -->
+        <div class="tab-panel" id="panelCatequista">
+            <div class="card" style="margin-bottom:20px">
+                <h3 style="font-weight:700;margin-bottom:16px">🏫 Adicionar Catequista Responsável</h3>
+                <div class="flex gap-2">
+                    <div class="form-group" style="flex:1;margin-bottom:0">
+                        <input type="text" id="novoNomeCatequista" placeholder="Nome do Catequista Responsável..." 
+                               onkeypress="if(event.key==='Enter') adicionarCatequista()">
+                    </div>
+                    <button class="btn btn-primary" onclick="adicionarCatequista()" style="white-space:nowrap;align-self:center">
+                        ➕ Adicionar
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center justify-between" style="margin-bottom:16px">
+                    <h3 style="font-weight:700">Lista de Catequistas de Pátio</h3>
+                    <span id="contadorCatequistas" style="font-size:12px;color:#adadad;background:#f0f4ff;padding:4px 12px;border-radius:20px;font-weight:600">0 cadastrados</span>
+                </div>
+                <div id="listaCatequistas">
+                    <div class="empty-cat">
+                        <div style="font-size:40px;margin-bottom:8px">🏫</div>
+                        <p>Nenhum Catequista Responsável cadastrado ainda.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /max-width -->
 </div>
-{% endblock %}
-
-{% block head %}
-<style>
-    .tipo-btn {
-        flex: 1;
-        padding: 40px;
-        border-radius: 10px;
-        border: 2px solid #E4DFFF;
-        cursor: pointer;
-        text-align: center;
-        transition: all 0.2s;
-        font-family: 'Josefin Sans', sans-serif;
-        color: #1A1535;
-    }
-
-    .crianca {
-        background: #d97706;
-        color: white;
-    }
-
-    .responsavel {
-        background: var(--primary);
-        color: white;
-    }
-
-    .tipo-btn.responsavel.active {
-        border-color: var(--primary);
-        box-shadow: 0 4px 16px var(--primary);
-        transform: translateY(10px);
-    }
-
-    .tipo-btn.active {
-        border-color: #d97706;
-        box-shadow: 0 4px 16px #d97706;
-        transform: translateY(10px);
-    }
-
-    .tipo-btn.responsavel:hover {
-        transform: translateY(10px);
-        box-shadow: 0 4px 16px var(--primary);
-    }
-
-    .tipo-btn.crianca:hover {
-        transform: translateY(10px);
-        box-shadow: 0 4px 16px #d97706;
-    }
-
-</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    let tipoSelecionado = 'crianca';
+    // ── Estado ──
     let responsaveis = [];
+    let catequistasPatio = [];
 
+    // ── Inicialização ──
     async function init() {
         responsaveis = await api('/api/admin/responsaveis');
-        const sel = document.getElementById('responsavel');
-        sel.innerHTML = '<option value="">— Selecione (opcional, mas recomendado) —</option>' +
+        preencherSelectResponsaveis();
+
+        catequistasPatio = await api('/api/admin/catequistas_patio');
+        renderizarCatequistas();
+        preencherSelectCatequistas();
+    }
+
+    // ── Troca de aba ──
+    function trocarAba(aba) {
+        ['crianca', 'responsavel', 'catequista'].forEach(a => {
+            document.getElementById('panel' + capitalize(a)).classList.remove('active');
+            document.getElementById('tabBtn' + capitalize(a)).classList.remove('active');
+        });
+        document.getElementById('panel' + capitalize(aba)).classList.add('active');
+        document.getElementById('tabBtn' + capitalize(aba)).classList.add('active');
+    }
+
+    function capitalize(s) {
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    // ── Popula selects ──
+    function preencherSelectResponsaveis() {
+        const sel = document.getElementById('c_responsavel');
+        sel.innerHTML = '<option value="">— Selecione (opcional) —</option>' +
             responsaveis.map(r => `<option value="${r.codigo}">${r.nome} (${r.codigo})</option>`).join('');
     }
 
-    function setTipo(tipo) {
-        tipoSelecionado = tipo;
-        document.getElementById('btnCrianca').classList.toggle('active', tipo === 'crianca');
-        document.getElementById('btnResponsavel').classList.toggle('active', tipo === 'responsavel');
-        document.getElementById('responsavelGroup').style.display = tipo === 'crianca' ? 'block' : 'none';
+    function preencherSelectCatequistas() {
+        const sel = document.getElementById('c_catequista_patio');
+        sel.innerHTML = '<option value="">— Nenhum —</option>' +
+            catequistasPatio.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
     }
 
-    async function cadastrar() {
-        const nome = document.getElementById('nome').value.trim();
-        if (!nome) { showToast('Informe o nome da pessoa.', 'error'); return; }
+    // ── Cadastrar Criança ──
+    async function cadastrarCrianca() {
+        const nome = document.getElementById('c_nome').value.trim();
+        if (!nome) { showToast('Informe o nome da criança.', 'error'); return; }
 
         const body = {
             nome,
-            tipo: tipoSelecionado,
-            telefone: document.getElementById('telefone').value,
-            email: document.getElementById('email').value,
-            data_nascimento: document.getElementById('dtNasc').value,
-            responsavel_codigo: tipoSelecionado === 'crianca' ? document.getElementById('responsavel').value : null
+            tipo: 'crianca',
+            data_nascimento: document.getElementById('c_dtNasc').value,
+            telefone: document.getElementById('c_telefone').value,
+            email: document.getElementById('c_email').value,
+            turma: document.getElementById('c_turma').value.trim(),
+            responsavel_codigo: document.getElementById('c_responsavel').value || null,
+            catequista_patio_id: document.getElementById('c_catequista_patio').value || null
         };
 
         const data = await api('/api/admin/pessoas', { method: 'POST', body: JSON.stringify(body) });
         if (data.success) {
-            // Buscar QR
             const qrData = await api(`/api/admin/qrcode/${data.codigo}`);
-            document.getElementById('resNome').textContent = data.pessoa.nome;
-            document.getElementById('resCodigo').textContent = data.codigo;
-            document.getElementById('resQR').src = 'data:image/png;base64,' + qrData.qr;
-            document.getElementById('resultadoCadastro').style.display = 'block';
-            document.getElementById('resultadoCadastro').scrollIntoView({ behavior: 'smooth' });
-            showToast('Cadastro realizado!', 'success');
+            document.getElementById('resNomeCrianca').textContent = data.pessoa.nome;
+            document.getElementById('resCodigoCrianca').textContent = data.codigo;
+            document.getElementById('resTurmaCrianca').textContent =
+                data.pessoa.turma ? `📚 Turma: ${data.pessoa.turma}` : '';
+            document.getElementById('resQRCrianca').src = 'data:image/png;base64,' + qrData.qr;
+            document.getElementById('resultadoCrianca').style.display = 'block';
+            document.getElementById('resultadoCrianca').scrollIntoView({ behavior: 'smooth' });
+            showToast('Criança cadastrada com sucesso!', 'success');
         }
     }
 
-    function novoCadastro() {
-        document.getElementById('resultadoCadastro').style.display = 'none';
-        document.getElementById('nome').value = '';
-        document.getElementById('telefone').value = '';
-        document.getElementById('email').value = '';
-        document.getElementById('dtNasc').value = '';
-        document.getElementById('nome').focus();
+    // ── Cadastrar Responsável ──
+    async function cadastrarResponsavel() {
+        const nome = document.getElementById('r_nome').value.trim();
+        if (!nome) { showToast('Informe o nome do responsável.', 'error'); return; }
+
+        const body = {
+            nome,
+            tipo: 'responsavel',
+            data_nascimento: document.getElementById('r_dtNasc').value,
+            telefone: document.getElementById('r_telefone').value,
+            email: document.getElementById('r_email').value,
+        };
+
+        const data = await api('/api/admin/pessoas', { method: 'POST', body: JSON.stringify(body) });
+        if (data.success) {
+            // atualiza lista de responsáveis para o select da aba criança
+            responsaveis = await api('/api/admin/responsaveis');
+            preencherSelectResponsaveis();
+
+            const qrData = await api(`/api/admin/qrcode/${data.codigo}`);
+            document.getElementById('resNomeResp').textContent = data.pessoa.nome;
+            document.getElementById('resCodigoResp').textContent = data.codigo;
+            document.getElementById('resQRResp').src = 'data:image/png;base64,' + qrData.qr;
+            document.getElementById('resultadoResponsavel').style.display = 'block';
+            document.getElementById('resultadoResponsavel').scrollIntoView({ behavior: 'smooth' });
+            showToast('Responsável cadastrado com sucesso!', 'success');
+        }
     }
 
-    function imprimirQR() {
-        const nome = document.getElementById('resNome').textContent;
-        const codigo = document.getElementById('resCodigo').textContent;
-        const src = document.getElementById('resQR').src;
+    // ── Catequistas de Pátio ──
+    async function adicionarCatequista() {
+        const nome = document.getElementById('novoNomeCatequista').value.trim();
+        if (!nome) { showToast('Informe o nome.', 'error'); return; }
+
+        const data = await api('/api/admin/catequistas_patio', {
+            method: 'POST',
+            body: JSON.stringify({ nome })
+        });
+
+        if (data.success) {
+            catequistasPatio.push(data.catequista);
+            catequistasPatio.sort((a, b) => a.nome.localeCompare(b.nome));
+            renderizarCatequistas();
+            preencherSelectCatequistas();
+            document.getElementById('novoNomeCatequista').value = '';
+            showToast(`${data.catequista.nome} adicionado!`, 'success');
+        } else {
+            showToast(data.message || 'Erro ao adicionar.', 'error');
+        }
+    }
+
+    async function excluirCatequista(id, nome) {
+        if (!confirm(`Remover "${nome}" da lista de catequistas de pátio?`)) return;
+        const data = await api(`/api/admin/catequistas_patio/${id}`, { method: 'DELETE' });
+        if (data.success) {
+            catequistasPatio = catequistasPatio.filter(c => c.id !== id);
+            renderizarCatequistas();
+            preencherSelectCatequistas();
+            showToast(`${nome} removido.`, 'info');
+        }
+    }
+
+    function renderizarCatequistas() {
+        const container = document.getElementById('listaCatequistas');
+        const contador = document.getElementById('contadorCatequistas');
+        contador.textContent = `${catequistasPatio.length} cadastrado${catequistasPatio.length !== 1 ? 's' : ''}`;
+
+        if (!catequistasPatio.length) {
+            container.innerHTML = `<div class="empty-cat">
+                <div style="font-size:40px;margin-bottom:8px">🏫</div>
+                <p>Nenhum Catequista Responsável cadastrado ainda.</p>
+            </div>`;
+            return;
+        }
+
+        container.innerHTML = catequistasPatio.map(c => `
+            <div class="catequista-item">
+                <div>
+                    <span style="font-size:16px;margin-right:8px">👤</span>
+                    <span style="text-transform:capitalize">${c.nome}</span>
+                </div>
+                <button class="del-btn" onclick="excluirCatequista(${c.id}, '${c.nome.replace(/'/g, "\\'")}')" title="Remover">🗑️</button>
+            </div>
+        `).join('');
+    }
+
+    // ── Helpers ──
+    function limparResultado(resultadoId, ...inputIds) {
+        document.getElementById(resultadoId).style.display = 'none';
+        inputIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        document.getElementById(inputIds[0]).focus();
+    }
+
+    function imprimirQR(nomeId, codigoId, imgId) {
+        const nome = document.getElementById(nomeId).textContent;
+        const codigo = document.getElementById(codigoId).textContent;
+        const src = document.getElementById(imgId).src;
         const win = window.open('', '_blank');
         win.document.write(`<html><body style="text-align:center;font-family:sans-serif;padding:40px">
-        <h1 style="color:#4F35D2">CateControl</h1>
-        <h2>${nome}</h2><p style="font-family:monospace;font-size:20px">${codigo}</p>
-        <img src="${src}" style="width:220px;margin:20px auto;display:block">
-        <p style="color:#888;font-size:14px">Apresente este QR Code no leitor para registrar entrada e saída.</p>
-        <script>window.onload = () => window.print()<\/script>
-    </body></html>`);
+            <h1 style="color:#0f6be4">CateControl</h1>
+            <h2>${nome}</h2>
+            <p style="font-family:monospace;font-size:20px">${codigo}</p>
+            <img src="${src}" style="width:220px;margin:20px auto;display:block">
+            <p style="color:#888;font-size:14px">Apresente este QR Code no leitor para registrar entrada e saída.</p>
+            <script>window.onload = () => window.print()<\/script>
+        </body></html>`);
     }
 
     init();
-    setTipo('crianca');
 </script>
 {% endblock %}

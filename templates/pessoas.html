@@ -32,17 +32,18 @@
             <h2>Pessoas Cadastradas</h2>
             <p>Gerencie os catequizandos e responsáveis</p>
         </div>
-        <a href="/admin/cadastrar" class="btn btn-primary" style="text-decoration: none;">➕ Novo Cadastro</a>
+        <a href="/admin/cadastrar" class="btn btn-primary" style="text-decoration:none">➕ Novo Cadastro</a>
     </div>
 
     <div class="card">
-        <div class="flex items-center justify-between mb-4">
-            <div class="search-bar" style="flex:1;max-width:400px">
+        <div class="flex items-center justify-between mb-4" style="flex-wrap:wrap;gap:10px">
+            <div class="search-bar" style="flex:1;max-width:380px">
                 <span class="search-icon">🔍</span>
                 <input type="text" placeholder="Buscar por nome ou código..." id="search" oninput="buscar()">
             </div>
             <div class="flex gap-2">
-                <select id="filtroTipo" onchange="buscar()" style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:Sora,sans-serif;font-size:14px;outline:none;cursor:pointer">
+                <select id="filtroTipo" onchange="buscar()"
+                    style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none;cursor:pointer">
                     <option value="">Todos</option>
                     <option value="crianca">Crianças</option>
                     <option value="responsavel">Responsáveis</option>
@@ -57,27 +58,30 @@
                         <th>Código</th>
                         <th>Nome</th>
                         <th>Tipo</th>
+                        <th>Turma</th>
+                        <th>Catequista Responsável</th>
                         <th>Telefone</th>
-                        <th>Responsável</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyPessoas">
-                    <tr><td colspan="6" class="empty-state">Carregando...</td></tr>
+                    <tr><td colspan="8" class="empty-state">Carregando...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- Modal Editar -->
+<!-- ── Modal Editar ── -->
 <div class="modal-overlay" id="modalEditar">
-    <div class="modal">
+    <div class="modal" style="width:560px">
         <div class="modal-header">
             <h3>✏️ Editar Pessoa</h3>
             <button class="modal-close" onclick="fecharModal()">✕</button>
         </div>
         <input type="hidden" id="editId">
+        <input type="hidden" id="editTipo">
+
         <div class="form-row">
             <div class="form-group"><label>Nome Completo</label><input type="text" id="editNome"></div>
             <div class="form-group"><label>Telefone</label><input type="text" id="editTelefone"></div>
@@ -86,12 +90,27 @@
             <div class="form-group"><label>E-mail</label><input type="email" id="editEmail"></div>
             <div class="form-group"><label>Data de Nascimento</label><input type="date" id="editDtNasc"></div>
         </div>
-        <div class="form-group" id="groupResponsavel">
-            <label>Código do Responsável</label>
-            <select id="editResponsavel" style="width:100%;padding:11px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:Sora,sans-serif;font-size:14px;outline:none">
-                <option value="">— Nenhum —</option>
-            </select>
+
+        <!-- Campos exclusivos de criança -->
+        <div id="groupCrianca" style="display:none">
+            <div class="form-group">
+                <label>🏷️ Turma</label>
+                <input type="text" id="editTurma" placeholder="Ex: 1º Ano, Crisma...">
+            </div>
+            <div class="form-group">
+                <label>👨 Responsável</label>
+                <select id="editResponsavel" style="width:100%;padding:11px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none">
+                    <option value="">— Nenhum —</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>🏫 Catequista Responsável</label>
+                <select id="editCatequistaPatio" style="width:100%;padding:11px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none">
+                    <option value="">— Nenhum —</option>
+                </select>
+            </div>
         </div>
+
         <div class="flex gap-2" style="margin-top:8px">
             <button class="btn btn-primary" style="flex:1" onclick="salvarEdicao()">💾 Salvar</button>
             <button class="btn btn-outline" onclick="fecharModal()">Cancelar</button>
@@ -99,17 +118,18 @@
     </div>
 </div>
 
-<!-- Modal QR Code -->
+<!-- ── Modal QR Code ── -->
 <div class="modal-overlay" id="modalQR">
     <div class="modal" style="text-align:center">
         <div class="modal-header">
             <h3>📱 QR CODE</h3>
             <button class="modal-close" onclick="fecharModalQR()">✕</button>
         </div>
-        <div style="border:2px solid #777777;">
-            <p id="qrNome" style="font-weight:700;font-size:18px;margin-bottom:4px; text-transform: capitalize; margin-top: 20px;"></p>
-            <p id="qrCodigo" class="mono" style="margin-bottom:10px"></p>
-            <img id="qrImg" style="max-width:250px; color: red">
+        <div style="border:2px solid #777">
+            <p id="qrNome" style="font-weight:700;font-size:18px;text-transform:capitalize;margin-top:20px;margin-bottom:2px"></p>
+            <p id="qrCodigo" class="mono" style="margin-bottom:4px;color:#6B6490;font-size:13px"></p>
+            <p id="qrTurma" style="font-size:12px;color:#0f6be4;margin-bottom:10px;font-weight:600"></p>
+            <img id="qrImg" style="max-width:250px">
         </div>
         <div style="margin-top:16px">
             <button class="btn btn-primary" onclick="imprimirQR()">🖨️ Imprimir</button>
@@ -122,36 +142,50 @@
 <script>
 let todasPessoas = [];
 let responsaveis = [];
+let catequistasPatio = [];
 
-async function carregarPessoas() {
-    todasPessoas = await api('/api/admin/pessoas');
-    responsaveis = await api('/api/admin/responsaveis');
+async function carregarDados() {
+    [todasPessoas, responsaveis, catequistasPatio] = await Promise.all([
+        api('/api/admin/pessoas'),
+        api('/api/admin/responsaveis'),
+        api('/api/admin/catequistas_patio')
+    ]);
     renderizar(todasPessoas);
 }
 
 function renderizar(pessoas) {
     const tbody = document.getElementById('tbodyPessoas');
-    
+
     if (!pessoas.length) {
-        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>Nenhuma pessoa encontrada</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><p>Nenhuma pessoa encontrada</p></div></td></tr>';
         return;
     }
-    tbody.innerHTML = pessoas.map(p => `
-        <tr>
-            <td><span class="mono" style="font-weight:700;color:#4F35D2">${p.codigo}</span></td>
-            <td><strong style="text-transform: capitalize">${p.nome}</strong></td>
+
+    tbody.innerHTML = pessoas.map(p => {
+        const turmaLabel = p.turma
+            ? `<span style="background:#e8f0ff;color:#0f6be4;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${p.turma}</span>`
+            : '<span style="color:#adadad">—</span>';
+
+        const catLabel = p.catequista_patio_nome
+            ? `<span style="background:#e8fff5;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">👤 ${p.catequista_patio_nome}</span>`
+            : '<span style="color:#adadad">—</span>';
+
+        return `<tr>
+            <td><span class="mono" style="font-weight:700;color:#0f6be4">${p.codigo}</span></td>
+            <td><strong style="text-transform:capitalize">${p.nome}</strong></td>
             <td><span class="badge badge-${p.tipo}">${p.tipo === 'crianca' ? '🧒 Criança' : '👨 Responsável'}</span></td>
+            <td>${p.tipo === 'crianca' ? turmaLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
+            <td>${p.tipo === 'crianca' ? catLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
             <td>${p.telefone || '—'}</td>
-            <td>${p.responsavel_codigo ? `<span class="mono">${p.responsavel_codigo}</span>` : '—'}</td>
             <td>
                 <div class="flex gap-2">
-                    <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome}')">Ver QRCode</button>
-                    <button class="btn btn-sm btn-primary" onclick="abrirEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})">&#x1F4DD; </button>
-                    <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome}')">&#x1F5D9;</button>
+                    <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome}','${p.turma || ''}')">Ver QR</button>
+                    <button class="btn btn-sm btn-primary" onclick='abrirEditar(${JSON.stringify(p).replace(/'/g,"&#39;")})'>✏️</button>
+                    <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome.replace(/'/g,"\\'")}')">🗑️</button>
                 </div>
             </td>
-        </tr>
-    `).join('');
+        </tr>`;
+    }).join('');
 }
 
 function buscar() {
@@ -167,16 +201,29 @@ function buscar() {
 
 function abrirEditar(p) {
     document.getElementById('editId').value = p.id;
+    document.getElementById('editTipo').value = p.tipo;
     document.getElementById('editNome').value = p.nome;
     document.getElementById('editTelefone').value = p.telefone || '';
     document.getElementById('editEmail').value = p.email || '';
     document.getElementById('editDtNasc').value = p.data_nascimento || '';
-    
-    const selResp = document.getElementById('editResponsavel');
-    selResp.innerHTML = '<option value="">— Nenhum —</option>' + 
-        responsaveis.map(r => `<option value="${r.codigo}" ${r.codigo === p.responsavel_codigo ? 'selected' : ''}>${r.nome} (${r.codigo})</option>`).join('');
-    
-    document.getElementById('groupResponsavel').style.display = p.tipo === 'crianca' ? 'block' : 'none';
+
+    const grupoExtra = document.getElementById('groupCrianca');
+    if (p.tipo === 'crianca') {
+        grupoExtra.style.display = 'block';
+
+        document.getElementById('editTurma').value = p.turma || '';
+
+        const selResp = document.getElementById('editResponsavel');
+        selResp.innerHTML = '<option value="">— Nenhum —</option>' +
+            responsaveis.map(r => `<option value="${r.codigo}" ${r.codigo === p.responsavel_codigo ? 'selected' : ''}>${r.nome} (${r.codigo})</option>`).join('');
+
+        const selCat = document.getElementById('editCatequistaPatio');
+        selCat.innerHTML = '<option value="">— Nenhum —</option>' +
+            catequistasPatio.map(c => `<option value="${c.id}" ${c.id === p.catequista_patio_id ? 'selected' : ''}>${c.nome}</option>`).join('');
+    } else {
+        grupoExtra.style.display = 'none';
+    }
+
     document.getElementById('modalEditar').classList.add('open');
 }
 
@@ -184,31 +231,38 @@ function fecharModal() { document.getElementById('modalEditar').classList.remove
 
 async function salvarEdicao() {
     const id = document.getElementById('editId').value;
-    await api(`/api/admin/pessoas/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-            nome: document.getElementById('editNome').value,
-            telefone: document.getElementById('editTelefone').value,
-            email: document.getElementById('editEmail').value,
-            data_nascimento: document.getElementById('editDtNasc').value,
-            responsavel_codigo: document.getElementById('editResponsavel').value
-        })
-    });
+    const tipo = document.getElementById('editTipo').value;
+
+    const body = {
+        nome: document.getElementById('editNome').value,
+        telefone: document.getElementById('editTelefone').value,
+        email: document.getElementById('editEmail').value,
+        data_nascimento: document.getElementById('editDtNasc').value,
+    };
+
+    if (tipo === 'crianca') {
+        body.turma = document.getElementById('editTurma').value.trim();
+        body.responsavel_codigo = document.getElementById('editResponsavel').value;
+        body.catequista_patio_id = document.getElementById('editCatequistaPatio').value || null;
+    }
+
+    await api(`/api/admin/pessoas/${id}`, { method: 'PUT', body: JSON.stringify(body) });
     showToast('Dados atualizados!', 'success');
     fecharModal();
-    carregarPessoas();
+    carregarDados();
 }
 
 async function deletar(id, nome) {
     if (!confirm(`Desativar "${nome}"? Esta pessoa não poderá mais usar o sistema.`)) return;
     await api(`/api/admin/pessoas/${id}`, { method: 'DELETE' });
     showToast(`${nome} desativado(a).`, 'info');
-    carregarPessoas();
+    carregarDados();
 }
 
-async function abrirQR(codigo, nome) {
+async function abrirQR(codigo, nome, turma) {
     document.getElementById('qrNome').textContent = nome;
     document.getElementById('qrCodigo').textContent = codigo;
+    document.getElementById('qrTurma').textContent = turma ? `📚 ${turma}` : '';
     document.getElementById('modalQR').classList.add('open');
     const data = await api(`/api/admin/qrcode/${codigo}`);
     document.getElementById('qrImg').src = 'data:image/png;base64,' + data.qr;
@@ -220,14 +274,17 @@ function imprimirQR() {
     const win = window.open('', '_blank');
     const nome = document.getElementById('qrNome').textContent;
     const codigo = document.getElementById('qrCodigo').textContent;
+    const turma = document.getElementById('qrTurma').textContent;
     const src = document.getElementById('qrImg').src;
     win.document.write(`<html><body style="text-align:center;font-family:sans-serif;padding:40px">
-        <h2>${nome}</h2><p>${codigo}</p>
+        <h2>${nome}</h2>
+        ${turma ? `<p style="color:#0f6be4;font-weight:bold">${turma}</p>` : ''}
+        <p style="font-family:monospace">${codigo}</p>
         <img src="${src}" style="width:200px"><br>
         <button onclick="window.print()" style="margin-top:20px;padding:10px 30px">Imprimir</button>
     </body></html>`);
 }
 
-carregarPessoas();
+carregarDados();
 </script>
 {% endblock %}
