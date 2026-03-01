@@ -7,6 +7,8 @@ import io
 import base64
 import os
 import hashlib
+import secrets
+import string
 from functools import wraps
 
 # ─── TIMEZONE BRASIL ─────────────────────────────────────────
@@ -113,14 +115,18 @@ def login_required(f):
     return decorated
 
 def gerar_codigo(tipo='crianca'):
+    """
+    Gera código único de 16 caracteres no formato:
+    """
+    prefixo = 'CR' if tipo == 'crianca' else 'RS'
     ano = datetime.now().year
-    sufixo = '00' if tipo == 'crianca' else '01'
-    count = Pessoa.query.filter(
-        Pessoa.codigo.like(f'{ano}%'),
-        Pessoa.tipo == tipo
-    ).count()
-    numero = str(count + 1).zfill(3)
-    return f'{ano}{numero}-{sufixo}'
+    charset = string.ascii_uppercase + string.digits  # A-Z + 0-9
+    while True:
+        aleatorio = ''.join(secrets.choice(charset) for _ in range(8))
+        codigo = f'{prefixo}-{ano}-{aleatorio}'
+        # Garante unicidade absoluta no banco
+        if not Pessoa.query.filter_by(codigo=codigo).first():
+            return codigo
 
 def pode_registrar(codigo, tipo_registro):
     um_minuto_atras = agora_brasilia() - timedelta(minutes=1)

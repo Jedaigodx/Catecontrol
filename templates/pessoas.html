@@ -7,7 +7,7 @@
         <div class="icon">&#X1F514;</div>
         <div>
             <h1>CATECONTROL</h1>
-            <p>Gestão de Catequese</p>
+            <p>Paróquia Sagrado Coração de Jesus</p>
         </div>
     </div>
     <nav class="sidebar-nav">
@@ -262,7 +262,7 @@ async function deletar(id, nome) {
 async function abrirQR(codigo, nome, turma) {
     document.getElementById('qrNome').textContent = nome;
     document.getElementById('qrCodigo').textContent = codigo;
-    document.getElementById('qrTurma').textContent = turma ? `📚 ${turma}` : '';
+    document.getElementById('qrTurma').textContent = turma ? `📚 Turma: ${turma}` : '';
     document.getElementById('modalQR').classList.add('open');
     const data = await api(`/api/admin/qrcode/${codigo}`);
     document.getElementById('qrImg').src = 'data:image/png;base64,' + data.qr;
@@ -271,20 +271,163 @@ async function abrirQR(codigo, nome, turma) {
 function fecharModalQR() { document.getElementById('modalQR').classList.remove('open'); }
 
 function imprimirQR() {
-    const win = window.open('', '_blank');
     const nome = document.getElementById('qrNome').textContent;
     const codigo = document.getElementById('qrCodigo').textContent;
     const turma = document.getElementById('qrTurma').textContent;
     const src = document.getElementById('qrImg').src;
-    win.document.write(`<html><body style="text-align:center;font-family:sans-serif;padding:40px">
-        <h2>${nome}</h2>
-        ${turma ? `<p style="color:#0f6be4;font-weight:bold">${turma}</p>` : ''}
-        <p style="font-family:monospace">${codigo}</p>
-        <img src="${src}" style="width:200px"><br>
-        <button onclick="window.print()" style="margin-top:20px;padding:10px 30px">Imprimir</button>
-    </body></html>`);
-}
 
+    const win = window.open('', '_blank');
+
+    win.document.write(`
+    <html>
+    <head>
+        <title>Crachá - CateControl</title>
+        <style>
+            @page { size: A4; margin: 0; }
+
+            body {
+                margin: 0;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: #eef1ff;
+                font-family: 'Segoe UI', Arial, sans-serif;
+            }
+
+            .card {
+                width: 54mm;
+                height: 86mm;
+                background: white;
+                border-radius: 14px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+                border: 2px solid #4F35D2;
+            }
+
+            .top {
+                background: linear-gradient(135deg, #4F35D2, #6D5AFD);
+                padding: 8px;
+                text-align: center;
+                color: white;
+            }
+
+            .top h1 {
+                font-size: 7pt;
+                margin: 0;
+                font-weight: 600;
+                letter-spacing: .5px;
+            }
+
+    .content {
+                flex: 1;
+                padding: 4px 6px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .qr {
+                margin-bottom: 6px;
+            }
+
+            .qr img {
+                width: 42mm;
+                height: 42mm;
+            }
+
+            .codigo {
+                font-family: monospace;
+                font-size: 8pt;
+                color: #666;
+                margin-bottom: 2px;
+                letter-spacing: .5px;
+            }
+
+            .nome {
+                font-size: 10pt;
+                font-weight: bold;
+                color: #222;
+                text-transform: capitalize;
+                line-height: 1.1;
+                max-width: 100%;
+                word-wrap: break-word;
+            }
+
+            .turma {
+                font-size: 8pt;
+                margin-top: 2px;
+                color: #0f6be4;
+                font-weight: 600;
+                max-width: 100%;
+                word-wrap: break-word;
+            }
+
+            .footer {
+                font-size: 6pt;
+                color: #666;
+                text-align: center;
+                padding: 4px;
+                border-top: 1px solid #eee;
+            }
+
+            .watermark {
+                position: absolute;
+                bottom: 8mm;
+                right: -10mm;
+                transform: rotate(-30deg);
+                font-size: 20pt;
+                color: rgba(79,53,210,0.05);
+                font-weight: bold;
+            }
+
+        </style>
+    </head>
+    <body>
+
+        <div class="card">
+
+            <div class="top">
+                <h1>Paróquia Sagrado Coração de Jesus</h1>
+            </div>
+
+            <div class="content">
+                <div class="qr">
+                    <img src="${src}">
+                </div>
+
+                <div>
+                    <div class="codigo">${codigo}</div>
+                    <div class="nome">${nome}</div>
+                    <div class="turma">${turma}</div>
+                </div>
+            </div>
+
+            <div class="footer">
+                Apresente no leitor para registrar entrada e saída
+            </div>
+
+            <div class="watermark">CateControl</div>
+
+        </div>
+
+        <script>
+            window.onload = function() {
+                window.print();
+            }
+        <\/script>
+
+    </body>
+    </html>
+    `);
+
+    win.document.close();
+}
 carregarDados();
 </script>
 {% endblock %}

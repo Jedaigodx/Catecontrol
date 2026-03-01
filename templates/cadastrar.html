@@ -114,7 +114,7 @@
         <div class="icon">&#X1F514;</div>
         <div>
             <h1>CATECONTROL</h1>
-            <p>Gestão de Catequese</p>
+            <p>Paróquia Sagrado Coração de Jesus</p>
         </div>
     </div>
     <nav class="sidebar-nav">
@@ -136,7 +136,7 @@
 <div class="main-content">
     <div class="page-header">
         <h2>NOVO CADASTRO</h2>
-        <p>Cadastre crianças, responsáveis ou gerencie catequistas de pátio</p>
+        <p>Cadastre alunos Catequizando, responsáveis ou gerencie catequistas</p>
     </div>
 
     <div style="max-width:700px; margin: 0 auto;">
@@ -144,25 +144,25 @@
         <!-- Tabs de navegação -->
         <div class="tabs-nav">
             <button class="tab-btn active" id="tabBtnCrianca" onclick="trocarAba('crianca')">
-                🧒 Criança / Catequizando
+                🧒 Alunos / Catequizando
             </button>
             <button class="tab-btn" id="tabBtnResponsavel" onclick="trocarAba('responsavel')">
                 👨 Responsável
             </button>
             <button class="tab-btn" id="tabBtnCatequista" onclick="trocarAba('catequista')">
-                🏫 Catequistas de Pátio
+                🏫 Catequistas
             </button>
         </div>
 
         <!-- ══════ ABA: CRIANÇA ══════ -->
         <div class="tab-panel active" id="panelCrianca">
             <div class="card">
-                <h3 style="font-weight:700;margin-bottom:20px">🧒 Dados da Criança / Catequizando</h3>
+                <h3 style="font-weight:700;margin-bottom:20px">🧒 Alunos / Catequizando</h3>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nome Completo *</label>
-                        <input type="text" id="c_nome" placeholder="Nome da criança">
+                        <input type="text" id="c_nome" style="text-transform: uppercase;" placeholder="Nome da criança">
                     </div>
                     <div class="form-group">
                         <label>Data de Nascimento</label>
@@ -173,7 +173,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Telefone / WhatsApp</label>
-                        <input type="tel" id="c_telefone" placeholder="(11) 99999-9999">
+                        <input type="tel" id="c_telefone" placeholder="(62) 99999-9999">
                     </div>
                     <div class="form-group">
                         <label>E-mail</label>
@@ -205,7 +205,7 @@
                         <option value="">— Nenhum —</option>
                     </select>
                     <p style="font-size:12px;color:#6B6490;margin-top:6px">
-                        Gerencie os catequistas de pátio na aba "Catequistas de Pátio".
+                        Gerencie os catequistas na aba "Catequistas".
                     </p>
                 </div>
 
@@ -236,7 +236,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nome Completo *</label>
-                        <input type="text" id="r_nome" placeholder="Nome do responsável">
+                        <input type="text" id="r_nome" style="text-transform: uppercase;" placeholder="Nome do responsável">
                     </div>
                     <div class="form-group">
                         <label>Data de Nascimento</label>
@@ -246,7 +246,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Telefone / WhatsApp</label>
-                        <input type="tel" id="r_telefone" placeholder="(11) 99999-9999">
+                        <input type="tel" id="r_telefone" placeholder="(62) 99999-9999">
                     </div>
                     <div class="form-group">
                         <label>E-mail</label>
@@ -271,7 +271,7 @@
             </div>
         </div>
 
-        <!-- ══════ ABA: CATEQUISTAS DE PÁTIO ══════ -->
+        <!-- ══════ ABA: CATEQUISTAS ══════ -->
         <div class="tab-panel" id="panelCatequista">
             <div class="card" style="margin-bottom:20px">
                 <h3 style="font-weight:700;margin-bottom:16px">🏫 Adicionar Catequista Responsável</h3>
@@ -288,7 +288,7 @@
 
             <div class="card">
                 <div class="flex items-center justify-between" style="margin-bottom:16px">
-                    <h3 style="font-weight:700">Lista de Catequistas de Pátio</h3>
+                    <h3 style="font-weight:700">Lista de Catequistas Responsáveis</h3>
                     <span id="contadorCatequistas" style="font-size:12px;color:#adadad;background:#f0f4ff;padding:4px 12px;border-radius:20px;font-weight:600">0 cadastrados</span>
                 </div>
                 <div id="listaCatequistas">
@@ -406,7 +406,7 @@
         }
     }
 
-    // ── Catequistas de Pátio ──
+    // ── Catequistas ──
     async function adicionarCatequista() {
         const nome = document.getElementById('novoNomeCatequista').value.trim();
         if (!nome) { showToast('Informe o nome.', 'error'); return; }
@@ -429,7 +429,7 @@
     }
 
     async function excluirCatequista(id, nome) {
-        if (!confirm(`Remover "${nome}" da lista de catequistas de pátio?`)) return;
+        if (!confirm(`Remover "${nome}" da lista de catequistas?`)) return;
         const data = await api(`/api/admin/catequistas_patio/${id}`, { method: 'DELETE' });
         if (data.success) {
             catequistasPatio = catequistasPatio.filter(c => c.id !== id);
@@ -472,22 +472,157 @@
         });
         document.getElementById(inputIds[0]).focus();
     }
+    function imprimirQR(nomeId, codigoId, qrImgId) {
 
-    function imprimirQR(nomeId, codigoId, imgId) {
-        const nome = document.getElementById(nomeId).textContent;
-        const codigo = document.getElementById(codigoId).textContent;
-        const src = document.getElementById(imgId).src;
-        const win = window.open('', '_blank');
-        win.document.write(`<html><body style="text-align:center;font-family:sans-serif;padding:40px">
-            <h1 style="color:#0f6be4">CateControl</h1>
-            <h2>${nome}</h2>
-            <p style="font-family:monospace;font-size:20px">${codigo}</p>
-            <img src="${src}" style="width:220px;margin:20px auto;display:block">
-            <p style="color:#888;font-size:14px">Apresente este QR Code no leitor para registrar entrada e saída.</p>
-            <script>window.onload = () => window.print()<\/script>
-        </body></html>`);
-    }
+    const nome = document.getElementById(nomeId).textContent;
+    const codigo = document.getElementById(codigoId).textContent;
+    const turmaEl = document.getElementById('resTurmaCrianca');
+    const turma = turmaEl ? turmaEl.textContent : '';
+    const src = document.getElementById(qrImgId).src;
 
-    init();
+    const win = window.open('', '_blank');
+
+    win.document.write(`
+    <html>
+    <head>
+        <title>Crachá - CateControl</title>
+        <style>
+            @page { size: A4; margin: 0; }
+
+            body {
+                margin: 0;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: #eef1ff;
+                font-family: Arial, sans-serif;
+            }
+
+            .card {
+                width: 54mm;
+                height: 86mm;
+                background: white;
+                border-radius: 14px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                border: 2px solid #4F35D2;
+                position: relative;
+            }
+
+            .top {
+                background: linear-gradient(135deg, #4F35D2, #6D5AFD);
+                padding: 6px;
+                text-align: center;
+                color: white;
+            }
+
+            .top h1 {
+                font-size: 7pt;
+                margin: 0;
+                font-weight: 600;
+            }
+
+            .content {
+                flex: 1;
+                padding: 4px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .qr img {
+                width: 42mm;
+                height: 42mm;
+                margin-bottom: 4px;
+            }
+
+            .codigo {
+                font-family: monospace;
+                font-size: 8pt;
+                color: #666;
+                margin-bottom: 2px;
+            }
+
+            .nome {
+                font-size: 10pt;
+                font-weight: bold;
+                line-height: 1.1;
+                word-break: break-word;
+                max-width: 100%;
+            }
+
+            .turma {
+                font-size: 8pt;
+                margin-top: 2px;
+                color: #0f6be4;
+                font-weight: 600;
+                word-break: break-word;
+            }
+
+            .footer {
+                font-size: 6pt;
+                color: #666;
+                text-align: center;
+                padding: 4px;
+                border-top: 1px solid #eee;
+            }
+
+            .watermark {
+                position: absolute;
+                bottom: 8mm;
+                right: -10mm;
+                transform: rotate(-30deg);
+                font-size: 20pt;
+                color: rgba(79,53,210,0.05);
+                font-weight: bold;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <div class="card">
+
+            <div class="top">
+                <h1>Paróquia Sagrado Coração de Jesus</h1>
+            </div>
+
+            <div class="content">
+                <div class="qr">
+                    <img src="${src}">
+                </div>
+
+                <div class="codigo">${codigo}</div>
+                <div class="nome">${nome}</div>
+                <div class="turma">${turma}</div>
+            </div>
+
+            <div class="footer">
+                Apresente este crachá no leitor<br>
+                para registrar entrada e saída
+            </div>
+
+            <div class="watermark">CateControl</div>
+
+        </div>
+
+        <script>
+            window.onload = function() {
+                window.print();
+            }
+        <\/script>
+
+    </body>
+    </html>
+    `);
+
+    win.document.close();
+}
+ init();
 </script>
 {% endblock %}
