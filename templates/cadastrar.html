@@ -310,6 +310,25 @@
     let responsaveis = [];
     let catequistasPatio = [];
 
+    // ── Helper: api com tratamento de erro visível ──
+    async function apiSafe(path, options = {}) {
+        try {
+            const res = await fetch(path, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showToast(data.message || data.error || `Erro ${res.status}`, 'error');
+                return null;
+            }
+            return data;
+        } catch (err) {
+            showToast('Erro de conexão. Verifique sua rede.', 'error');
+            return null;
+        }
+    }
+
     // ── Inicialização ──
     async function init() {
         responsaveis = await api('/api/admin/responsaveis');
@@ -355,17 +374,20 @@
         const body = {
             nome,
             tipo: 'crianca',
-            data_nascimento: document.getElementById('c_dtNasc').value,
-            telefone: document.getElementById('c_telefone').value,
-            email: document.getElementById('c_email').value,
-            turma: document.getElementById('c_turma').value.trim(),
+            data_nascimento: document.getElementById('c_dtNasc').value || null,
+            telefone: document.getElementById('c_telefone').value || null,
+            email: document.getElementById('c_email').value || null,
+            turma: document.getElementById('c_turma').value.trim() || null,
             responsavel_codigo: document.getElementById('c_responsavel').value || null,
             catequista_patio_id: document.getElementById('c_catequista_patio').value || null
         };
 
-        const data = await api('/api/admin/pessoas', { method: 'POST', body: JSON.stringify(body) });
+        const data = await apiSafe('/api/admin/pessoas', { method: 'POST', body: JSON.stringify(body) });
+        if (!data) return;
+
         if (data.success) {
-            const qrData = await api(`/api/admin/qrcode/${data.codigo}`);
+            const qrData = await apiSafe(`/api/admin/qrcode/${data.codigo}`);
+            if (!qrData) return;
             document.getElementById('resNomeCrianca').textContent = data.pessoa.nome;
             document.getElementById('resCodigoCrianca').textContent = data.codigo;
             document.getElementById('resTurmaCrianca').textContent =
@@ -374,6 +396,8 @@
             document.getElementById('resultadoCrianca').style.display = 'block';
             document.getElementById('resultadoCrianca').scrollIntoView({ behavior: 'smooth' });
             showToast('Criança cadastrada com sucesso!', 'success');
+        } else {
+            showToast(data.message || 'Erro ao cadastrar.', 'error');
         }
     }
 
@@ -385,24 +409,32 @@
         const body = {
             nome,
             tipo: 'responsavel',
-            data_nascimento: document.getElementById('r_dtNasc').value,
-            telefone: document.getElementById('r_telefone').value,
-            email: document.getElementById('r_email').value,
+            data_nascimento: document.getElementById('r_dtNasc').value || null,
+            telefone: document.getElementById('r_telefone').value || null,
+            email: document.getElementById('r_email').value || null,
         };
 
-        const data = await api('/api/admin/pessoas', { method: 'POST', body: JSON.stringify(body) });
+        // ✅ FIX-BUG: usa apiSafe para capturar erros HTTP corretamente
+        const data = await apiSafe('/api/admin/pessoas', { method: 'POST', body: JSON.stringify(body) });
+        if (!data) return; // apiSafe já exibiu o toast de erro
+
         if (data.success) {
-            // atualiza lista de responsáveis para o select da aba criança
+            // ✅ FIX-BUG: atualiza select da aba criança com o novo responsável
             responsaveis = await api('/api/admin/responsaveis');
             preencherSelectResponsaveis();
 
-            const qrData = await api(`/api/admin/qrcode/${data.codigo}`);
+            // ✅ FIX-BUG: usa data.codigo e data.pessoa que agora existem garantidamente
+            const qrData = await apiSafe(`/api/admin/qrcode/${data.codigo}`);
+            if (!qrData) return;
+
             document.getElementById('resNomeResp').textContent = data.pessoa.nome;
             document.getElementById('resCodigoResp').textContent = data.codigo;
             document.getElementById('resQRResp').src = 'data:image/png;base64,' + qrData.qr;
             document.getElementById('resultadoResponsavel').style.display = 'block';
             document.getElementById('resultadoResponsavel').scrollIntoView({ behavior: 'smooth' });
             showToast('Responsável cadastrado com sucesso!', 'success');
+        } else {
+            showToast(data.message || 'Erro ao cadastrar responsável.', 'error');
         }
     }
 
