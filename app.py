@@ -33,16 +33,6 @@ else:
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-with app.app_context():
-    db.create_all()
-
-    # Criar admin padrão se não existir
-    if not admin.query.filter_by(username="admin").first():
-        admin = admin(username="admin")
-        admin.set_password("123456")
-        db.session.add(admin)
-        db.session.commit()
-        print("admin padrão criado!")
 
 # ─── MODELS ───────────────────────────────────────────────────────────────────
 
@@ -112,6 +102,7 @@ class Registro(db.Model):
 
 
 class Admin(db.Model):
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
@@ -122,6 +113,15 @@ class Admin(db.Model):
     def check_password(self, password):
         return self.password_hash == hashlib.sha256(password.encode()).hexdigest()
 
+with app.app_context():
+    db.create_all()
+
+    if not Admin.query.filter_by(username="admin").first():
+        novo_admin = Admin(username="admin")
+        novo_admin.set_password("123456")
+        db.session.add(novo_admin)
+        db.session.commit()
+        print("Admin padrão criado!")  
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
 
