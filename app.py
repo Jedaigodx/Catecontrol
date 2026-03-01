@@ -19,9 +19,9 @@ def agora_brasilia():
     return datetime.now(BRASILIA_TZ)
 
 app = Flask(__name__)
-app.secret_key = 'catecontrol-secret-key-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///catecontrol.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
