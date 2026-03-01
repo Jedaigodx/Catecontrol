@@ -144,7 +144,7 @@
         <!-- Tabs de navegação -->
         <div class="tabs-nav">
             <button class="tab-btn active" id="tabBtnCrianca" onclick="trocarAba('crianca')">
-                🧒 Alunos / Catequizando
+                🧒 Catequizando / Aluno
             </button>
             <button class="tab-btn" id="tabBtnResponsavel" onclick="trocarAba('responsavel')">
                 👨 Responsável
@@ -157,16 +157,19 @@
         <!-- ══════ ABA: CRIANÇA ══════ -->
         <div class="tab-panel active" id="panelCrianca">
             <div class="card">
-                <h3 style="font-weight:700;margin-bottom:20px">🧒 Alunos / Catequizando</h3>
+                <h3 style="font-weight:700;margin-bottom:20px">🧒 Catequizando / Aluno</h3>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nome Completo *</label>
-                        <input type="text" id="c_nome" style="text-transform: uppercase;" placeholder="Nome da criança">
+                        <input type="text" id="c_nome" style="text-transform: uppercase;" placeholder="Nome do catequizando">
                     </div>
                     <div class="form-group">
-                        <label>Data de Nascimento</label>
+                        <label>Data de Nascimento <span style="font-size:11px;color:#22c55e;font-weight:700">★ Define: Catequizando ou Adulto</span></label>
                         <input type="date" id="c_dtNasc">
+                        <p style="font-size:11px;color:#6B6490;margin-top:4px">
+                            🔄 Menor de 18 anos → <strong>Catequizando</strong> &nbsp;|&nbsp; 18+ anos → <strong>Adulto</strong>
+                        </p>
                     </div>
                 </div>
 
@@ -210,7 +213,7 @@
                 </div>
 
                 <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="cadastrarCrianca()">
-                    ✅ Cadastrar Criança e Gerar QR Code
+                    ✅ Cadastrar e Gerar QR Code
                 </button>
             </div>
 
@@ -310,7 +313,7 @@
     let responsaveis = [];
     let catequistasPatio = [];
 
-    // ── Helper: api com tratamento de erro visível ──
+    // ── api com tratamento de erro ──
     async function apiSafe(path, options = {}) {
         try {
             const res = await fetch(path, {
@@ -324,7 +327,8 @@
             }
             return data;
         } catch (err) {
-            showToast('Erro de conexão. Verifique sua rede.', 'error');
+            showToast('Erro de conexão com o servidor. Verifique se o servidor está rodando.', 'error');
+            console.error('Fetch error:', err);
             return null;
         }
     }
@@ -366,14 +370,14 @@
             catequistasPatio.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
     }
 
-    // ── Cadastrar Criança ──
+    // ── Cadastrar Catequizando ──
     async function cadastrarCrianca() {
         const nome = document.getElementById('c_nome').value.trim();
-        if (!nome) { showToast('Informe o nome da criança.', 'error'); return; }
+        if (!nome) { showToast('Informe o nome do catequizando.', 'error'); return; }
 
         const body = {
             nome,
-            tipo: 'crianca',
+            tipo: 'catequizando',   // backend calcula catequizando/adulto pela data de nascimento
             data_nascimento: document.getElementById('c_dtNasc').value || null,
             telefone: document.getElementById('c_telefone').value || null,
             email: document.getElementById('c_email').value || null,
@@ -388,14 +392,17 @@
         if (data.success) {
             const qrData = await apiSafe(`/api/admin/qrcode/${data.codigo}`);
             if (!qrData) return;
+
+            // Mostra tipo correto definido pelo servidor
+            const tipoLabel = data.pessoa.tipo === 'adulto' ? '🧑 Adulto Catequizando' : '🧒 Catequizando';
             document.getElementById('resNomeCrianca').textContent = data.pessoa.nome;
             document.getElementById('resCodigoCrianca').textContent = data.codigo;
             document.getElementById('resTurmaCrianca').textContent =
-                data.pessoa.turma ? `📚 Turma: ${data.pessoa.turma}` : '';
+                (data.pessoa.turma ? `📚 Turma: ${data.pessoa.turma}  ` : '') + tipoLabel;
             document.getElementById('resQRCrianca').src = 'data:image/png;base64,' + qrData.qr;
             document.getElementById('resultadoCrianca').style.display = 'block';
             document.getElementById('resultadoCrianca').scrollIntoView({ behavior: 'smooth' });
-            showToast('Criança cadastrada com sucesso!', 'success');
+            showToast('Cadastrado com sucesso!', 'success');
         } else {
             showToast(data.message || 'Erro ao cadastrar.', 'error');
         }
@@ -414,16 +421,14 @@
             email: document.getElementById('r_email').value || null,
         };
 
-        // ✅ FIX-BUG: usa apiSafe para capturar erros HTTP corretamente
         const data = await apiSafe('/api/admin/pessoas', { method: 'POST', body: JSON.stringify(body) });
-        if (!data) return; // apiSafe já exibiu o toast de erro
+        if (!data) return;
 
         if (data.success) {
-            // ✅ FIX-BUG: atualiza select da aba criança com o novo responsável
+            // Atualiza lista de responsáveis para o select da aba catequizando
             responsaveis = await api('/api/admin/responsaveis');
             preencherSelectResponsaveis();
 
-            // ✅ FIX-BUG: usa data.codigo e data.pessoa que agora existem garantidamente
             const qrData = await apiSafe(`/api/admin/qrcode/${data.codigo}`);
             if (!qrData) return;
 
