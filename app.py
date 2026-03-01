@@ -33,6 +33,16 @@ else:
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+with app.app_context():
+    db.create_all()
+
+    # Criar admin padrão se não existir
+    if not admin.query.filter_by(username="admin").first():
+        admin = admin(username="admin")
+        admin.set_password("123456")
+        db.session.add(admin)
+        db.session.commit()
+        print("admin padrão criado!")
 
 # ─── MODELS ───────────────────────────────────────────────────────────────────
 
