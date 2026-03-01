@@ -82,7 +82,6 @@ class Pessoa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     codigo = db.Column(db.String(20), unique=True, nullable=False)
     nome = db.Column(db.String(120), nullable=False)
-    # tipo: 'catequizando' | 'adulto' | 'responsavel'
     tipo = db.Column(db.String(15), nullable=False)
     responsavel_codigo = db.Column(db.String(20), nullable=True)
     telefone = db.Column(db.String(20), nullable=True)
@@ -122,9 +121,10 @@ class Registro(db.Model):
 
     def to_dict(self):
         h = self.horario
-        # Garante timezone antes de formatar
         if h.tzinfo is None:
             h = h.replace(tzinfo=BRASILIA_TZ)
+        else:
+            h = h.astimezone(BRASILIA_TZ)
         return {
             'id': self.id,
             'pessoa_codigo': self.pessoa_codigo,
@@ -254,20 +254,30 @@ def registrar():
         )
         db.session.add(registro)
         db.session.commit()
+        h = registro.horario
+        if h.tzinfo is None:
+            h = h.replace(tzinfo=BRASILIA_TZ)
+        else:
+            h = h.astimezone(BRASILIA_TZ)
         return jsonify({
             'success': True, 'tipo': 'saida',
             'pessoa': pessoa.to_dict(),
-            'horario': registro.horario.strftime('%H:%M:%S'),
+            'horario': h.strftime('%H:%M:%S'),
             'message': f'Saída de {pessoa.nome} autorizada por {responsavel.nome}.'
         })
 
     registro = Registro(pessoa_codigo=codigo, pessoa_nome=pessoa.nome, tipo=tipo_registro)
     db.session.add(registro)
     db.session.commit()
+    h = registro.horario
+    if h.tzinfo is None:
+        h = h.replace(tzinfo=BRASILIA_TZ)
+    else:
+        h = h.astimezone(BRASILIA_TZ)
     return jsonify({
         'success': True, 'tipo': tipo_registro,
         'pessoa': pessoa.to_dict(),
-        'horario': registro.horario.strftime('%H:%M:%S'),
+        'horario': h.strftime('%H:%M:%S'),
         'message': f'{"Entrada" if tipo_registro == "entrada" else "Saída"} de {pessoa.nome} registrada!'
     })
 
@@ -275,7 +285,6 @@ def registrar():
 @app.route('/api/atividade_recente')
 def atividade_recente():
     registros = Registro.query.order_by(Registro.horario.desc()).limit(10).all()
-    # Retorna formato completo DD/MM/YYYY HH:MM:SS que o leitor.html espera
     return jsonify([r.to_dict() for r in registros])
 
 
@@ -333,8 +342,8 @@ def relatorios():
 @login_required
 def api_dashboard():
     hoje = agora_brasilia().date()
-    inicio_hoje = datetime.combine(hoje, datetime.min.time())
-    fim_hoje = datetime.combine(hoje, datetime.max.time())
+    inicio_hoje = datetime.combine(hoje, datetime.min.time()).replace(tzinfo=BRASILIA_TZ)
+    fim_hoje = datetime.combine(hoje, datetime.max.time()).replace(tzinfo=BRASILIA_TZ)
 
     entradas_hoje = Registro.query.filter(
         Registro.tipo == 'entrada',
@@ -350,8 +359,8 @@ def api_dashboard():
     frequencia = []
     for i in range(6, -1, -1):
         dia = agora_brasilia().date() - timedelta(days=i)
-        inicio = datetime.combine(dia, datetime.min.time())
-        fim = datetime.combine(dia, datetime.max.time())
+        inicio = datetime.combine(dia, datetime.min.time()).replace(tzinfo=BRASILIA_TZ)
+        fim = datetime.combine(dia, datetime.max.time()).replace(tzinfo=BRASILIA_TZ)
         ent = Registro.query.filter(Registro.tipo == 'entrada', Registro.horario.between(inicio, fim)).count()
         sai = Registro.query.filter(Registro.tipo == 'saida', Registro.horario.between(inicio, fim)).count()
         frequencia.append({'dia': dia.strftime('%d/%m'), 'entradas': ent, 'saidas': sai})
@@ -491,10 +500,11 @@ def api_relatorio(codigo):
 
     try:
         if data_inicio:
-            query = query.filter(Registro.horario >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+            inicio_dt = datetime.strptime(data_inicio, '%Y-%m-%d').replace(tzinfo=BRASILIA_TZ)
+            query = query.filter(Registro.horario >= inicio_dt)
         if data_fim:
-            fim = datetime.strptime(data_fim, '%Y-%m-%d') + timedelta(days=1)
-            query = query.filter(Registro.horario < fim)
+            fim_dt = (datetime.strptime(data_fim, '%Y-%m-%d') + timedelta(days=1)).replace(tzinfo=BRASILIA_TZ)
+            query = query.filter(Registro.horario < fim_dt)
     except ValueError:
         return jsonify({'error': 'Formato de data inválido. Use YYYY-MM-DD'}), 400
 
