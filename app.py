@@ -415,17 +415,6 @@ def api_deletar_catequista_patio(cid):
 
 # ─── INIT ─────────────────────────────────────────────────────────────────────
 
-def init_db():
+if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-        if not Admin.query.first():
-            admin = Admin(username='admin')
-            admin.set_password('admin123')
-            db.session.add(admin)
-            db.session.commit()
-            print('Admin criado: admin / admin123')
-
-if __name__ == '__main__':
-    init_db()
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
