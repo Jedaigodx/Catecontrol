@@ -313,32 +313,42 @@
     let responsaveis = [];
     let catequistasPatio = [];
 
-    // ── api com tratamento de erro ──
+    // ── api segura: SEMPRE usa esta função, nunca a api() global ──
     async function apiSafe(path, options = {}) {
         try {
             const res = await fetch(path, {
                 headers: { 'Content-Type': 'application/json' },
                 ...options
             });
-            const data = await res.json();
+            let data;
+            try {
+                data = await res.json();
+            } catch (jsonErr) {
+                console.error('Resposta não é JSON:', jsonErr);
+                showToast(`Erro ${res.status}: resposta inesperada do servidor.`, 'error');
+                return null;
+            }
             if (!res.ok) {
                 showToast(data.message || data.error || `Erro ${res.status}`, 'error');
                 return null;
             }
             return data;
         } catch (err) {
-            showToast('Erro de conexão com o servidor. Verifique se o servidor está rodando.', 'error');
-            console.error('Fetch error:', err);
+            console.error('Fetch error em', path, err);
+            showToast('Falha na comunicação com o servidor. Verifique sua conexão.', 'error');
             return null;
         }
     }
 
     // ── Inicialização ──
     async function init() {
-        responsaveis = await api('/api/admin/responsaveis');
+        const [resps, cats] = await Promise.all([
+            apiSafe('/api/admin/responsaveis'),
+            apiSafe('/api/admin/catequistas_patio')
+        ]);
+        responsaveis = resps || [];
+        catequistasPatio = cats || [];
         preencherSelectResponsaveis();
-
-        catequistasPatio = await api('/api/admin/catequistas_patio');
         renderizarCatequistas();
         preencherSelectCatequistas();
     }
@@ -377,7 +387,7 @@
 
         const body = {
             nome,
-            tipo: 'catequizando',   // backend calcula catequizando/adulto pela data de nascimento
+            tipo: 'catequizando',
             data_nascimento: document.getElementById('c_dtNasc').value || null,
             telefone: document.getElementById('c_telefone').value || null,
             email: document.getElementById('c_email').value || null,
@@ -393,7 +403,6 @@
             const qrData = await apiSafe(`/api/admin/qrcode/${data.codigo}`);
             if (!qrData) return;
 
-            // Mostra tipo correto definido pelo servidor
             const tipoLabel = data.pessoa.tipo === 'adulto' ? '🧑 Adulto Catequizando' : '🧒 Catequizando';
             document.getElementById('resNomeCrianca').textContent = data.pessoa.nome;
             document.getElementById('resCodigoCrianca').textContent = data.codigo;
@@ -426,8 +435,11 @@
 
         if (data.success) {
             // Atualiza lista de responsáveis para o select da aba catequizando
-            responsaveis = await api('/api/admin/responsaveis');
-            preencherSelectResponsaveis();
+            const resps = await apiSafe('/api/admin/responsaveis');
+            if (resps) {
+                responsaveis = resps;
+                preencherSelectResponsaveis();
+            }
 
             const qrData = await apiSafe(`/api/admin/qrcode/${data.codigo}`);
             if (!qrData) return;
@@ -448,7 +460,7 @@
         const nome = document.getElementById('novoNomeCatequista').value.trim();
         if (!nome) { showToast('Informe o nome.', 'error'); return; }
 
-        const data = await api('/api/admin/catequistas_patio', {
+        const data = await apiSafe('/api/admin/catequistas_patio', {
             method: 'POST',
             body: JSON.stringify({ nome })
         });
@@ -467,7 +479,7 @@
 
     async function excluirCatequista(id, nome) {
         if (!confirm(`Remover "${nome}" da lista de catequistas?`)) return;
-        const data = await api(`/api/admin/catequistas_patio/${id}`, { method: 'DELETE' });
+        const data = await apiSafe(`/api/admin/catequistas_patio/${id}`, { method: 'DELETE' });
         if (data.success) {
             catequistasPatio = catequistasPatio.filter(c => c.id !== id);
             renderizarCatequistas();
