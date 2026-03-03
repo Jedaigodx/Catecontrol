@@ -44,10 +44,10 @@
             <div class="flex gap-2">
                 <select id="filtroTipo" onchange="buscar()"
                     style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none;cursor:pointer">
-                    <option value="">Todos</option>
-                    <option value="catequizando">Catequizandos</option>
-                    <option value="adulto">Adultos</option>
-                    <option value="responsavel">Responsáveis</option>
+                    <option value="">Todos os tipos</option>
+                    <option value="catequizando">🧒 Criança / Adolescente</option>
+                    <option value="adulto">🧑 Adulto Catequizando</option>
+                    <option value="responsavel">👨 Responsável</option>
                 </select>
             </div>
         </div>
@@ -92,14 +92,14 @@
             <div class="form-group"><label>Data de Nascimento</label><input type="date" id="editDtNasc"></div>
         </div>
 
-        <!-- Campos exclusivos de criança -->
+        <!-- Campos exclusivos de catequizando/adulto -->
         <div id="groupCrianca" style="display:none">
             <div class="form-group">
                 <label>🏷️ Turma</label>
                 <input type="text" id="editTurma" placeholder="Ex: 1º Ano, Crisma...">
             </div>
             <div class="form-group">
-                <label>👨 Responsável</label>
+                <label>👨 Responsável vinculado</label>
                 <select id="editResponsavel" style="width:100%;padding:11px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none">
                     <option value="">— Nenhum —</option>
                 </select>
@@ -155,7 +155,11 @@ async function carregarDados() {
 }
 
 function tipoIcone(tipo) {
-    const mapa = { catequizando: '🧒 Catequizando', adulto: '🧑 Adulto', responsavel: '👨 Responsável' };
+    const mapa = {
+        catequizando: '🧒 Criança / Adolescente',
+        adulto: '🧑 Adulto Catequizando',
+        responsavel: '👨 Responsável'
+    };
     return mapa[tipo] || tipo;
 }
 
@@ -178,7 +182,7 @@ function renderizar(pessoas) {
 
         return `<tr>
             <td><span class="mono" style="font-weight:700;color:#0f6be4">${p.codigo}</span></td>
-            <td><strong style="text-transform:capitalize">${p.nome}</strong></td>
+            <td style="vertical-align:middle"><strong style="text-transform:capitalize;display:block">${p.nome}</strong>${p.email ? `<small style="color:#9ca3af;font-size:11px">${p.email}</small>` : ''}</td>
             <td><span class="badge badge-${p.tipo}">${tipoIcone(p.tipo)}</span></td>
             <td>${p.tipo !== 'responsavel' ? turmaLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
             <td>${p.tipo !== 'responsavel' ? catLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
@@ -246,16 +250,26 @@ async function salvarEdicao() {
         data_nascimento: document.getElementById('editDtNasc').value,
     };
 
-    if (tipo === 'crianca') {
+    if (tipo === 'catequizando' || tipo === 'adulto') {
         body.turma = document.getElementById('editTurma').value.trim();
-        body.responsavel_codigo = document.getElementById('editResponsavel').value;
-        body.catequista_patio_id = document.getElementById('editCatequistaPatio').value || null;
+        body.responsavel_codigo = document.getElementById('editResponsavel').value || null;
+        const catId = document.getElementById('editCatequistaPatio').value;
+        body.catequista_patio_id = catId ? parseInt(catId) : null;
+    } else {
+        // Responsável: garante que campos extras não sejam enviados sujos
+        body.turma = null;
+        body.responsavel_codigo = null;
+        body.catequista_patio_id = null;
     }
 
-    await api(`/api/admin/pessoas/${id}`, { method: 'PUT', body: JSON.stringify(body) });
-    showToast('Dados atualizados!', 'success');
-    fecharModal();
-    carregarDados();
+    const res = await api(`/api/admin/pessoas/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    if (res && res.success !== false) {
+        showToast('Dados atualizados com sucesso!', 'success');
+        fecharModal();
+        carregarDados();
+    } else {
+        showToast(res?.message || 'Erro ao salvar.', 'error');
+    }
 }
 
 async function deletar(id, nome) {
