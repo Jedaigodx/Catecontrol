@@ -45,9 +45,9 @@
                 <select id="filtroTipo" onchange="buscar()"
                     style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none;cursor:pointer">
                     <option value="">Todos os tipos</option>
-                    <option value="catequizando">🧒 Criança / Adolescente</option>
-                    <option value="adulto">🧑 Adulto Catequizando</option>
-                    <option value="responsavel">👨 Responsável</option>
+                    <option value="catequizando">Criança / Adolescente</option>
+                    <option value="adulto">Adulto</option>
+                    <option value="responsavel">Responsável</option>
                 </select>
             </div>
         </div>
@@ -156,8 +156,8 @@ async function carregarDados() {
 
 function tipoIcone(tipo) {
     const mapa = {
-        catequizando: '🧒 Criança / Adolescente',
-        adulto: '🧑 Adulto Catequizando',
+        catequizando: 'Criança / Adolescente',
+        adulto: 'Adulto',
         responsavel: '👨 Responsável'
     };
     return mapa[tipo] || tipo;
