@@ -1,351 +1,264 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leitor QR - CateControl</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <style>
         :root {
             --primary: #0f6be4;
             --primary-dark: #0856bb;
-            --accent: #028f15;
-            --accent-red: #ff0000;
-            --accent-yellow: #ffb300;
+            --accent: #16a34a;
+            --accent-red: #dc2626;
+            --accent-yellow: #d97706;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Josefin Sans', sans-serif;
-            /* background: linear-gradient(160deg, #0f0c29 0%, #1A1535 40%, #2d1b8a 100%); */
-            background: linear-gradient(rgba(255, 255, 255, 1), rgb(161, 161, 161));
+            background: linear-gradient(160deg, #f0f4fb 0%, #e2eaf8 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 24px;
-            color: white;
+            padding: 20px;
+            color: #1e293b;
         }
 
         .header {
             width: 100%;
-            max-width: 99%;
+            max-width: 480px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin-bottom: 20px;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .brand { display: flex; align-items: center; gap: 10px; }
 
-        .brand .icon {
-            font-size: 40px;
-        }
-
-        .brand h1 {
+        .brand .brand-icon {
+            width: 38px; height: 38px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
             font-size: 20px;
-            color: var(--primary-dark);
-            font-weight: 700;
         }
 
-        .brand p {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-            color: var(--primary);
-        }
+        .brand h1 { font-size: 18px; color: var(--primary-dark); font-weight: 700; letter-spacing: 0.5px; }
+        .brand p  { font-size: 11px; color: #64748b; }
 
         .admin-link {
-            padding: 13px 14px;
+            padding: 9px 14px;
             background: var(--primary);
             color: white;
             text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 10px;
-            transition: background 0.2s;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 8px;
+            transition: background 0.15s;
+            letter-spacing: 0.3px;
         }
-
-        .admin-link:hover {
-            background: var(--primary-dark);
-        }
+        .admin-link:hover { background: var(--primary-dark); }
 
         .reader-container {
             width: 100%;
-            max-width: 480px;
+            max-width: 460px;
         }
 
-        .scanner-box-input {
-            background: rgb(255, 255, 255);
-            border: 2px solid white;
+        /* Result card */
+        .result-card {
+            border-radius: 16px;
             padding: 24px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
+            text-align: center;
+            animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+            display: none;
+            margin-bottom: 14px;
+            color: white;
         }
 
-        .scanner-box {
-            background: var(--primary-dark);
-            padding: 16px;
+        .result-card.entrada { background: var(--accent); }
+        .result-card.saida   { background: var(--accent-red); }
+        .result-card.error   { background: var(--accent-yellow); color: white; }
+        .result-card.espera  { background: #1e40af; }
+
+        @keyframes popIn {
+            from { transform: scale(0.88); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+
+        .result-icon  { font-size: 40px; margin-bottom: 8px; }
+        .result-tipo  { font-size: 13px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.85; text-transform: uppercase; }
+        .result-nome  { font-size: 20px; font-weight: 700; margin-bottom: 3px; text-transform: uppercase; }
+        .result-codigo{ font-family: 'Courier New', monospace; font-size: 12px; opacity: 0.65; margin-bottom: 6px; }
+        .result-horario{ font-size: 26px; font-weight: 700; font-family: 'Courier New', monospace; }
+        .result-msg   { font-size: 12px; opacity: 0.7; margin-top: 6px; }
+
+        /* Responsável pending */
+        .resp-pending {
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 16px;
+            padding: 22px;
+            text-align: center;
+            display: none;
+            margin-bottom: 14px;
+        }
+
+        .resp-pending h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--primary-dark); }
+        .resp-pending p  { font-size: 13px; color: #64748b; margin-bottom: 12px; }
+        .resp-pending .resp-nome { font-size: 17px; font-weight: 700; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; }
+
+        .cancel-btn {
+            padding: 7px 18px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+        .cancel-btn:hover { background: #e2e8f0; }
+
+        /* Scanner / input */
+        .scanner-wrap {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 8px rgba(15,23,42,0.07);
+            margin-bottom: 14px;
         }
 
         .scanner-title {
             text-align: center;
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--primary);
+            color: #475569;
+            margin-bottom: 14px;
+            letter-spacing: 0.3px;
         }
 
-        #qr-reader {
-            border-radius: 16px;
-            overflow: hidden;
-        }
+        #qr-reader { border-radius: 10px; overflow: hidden; }
+        #qr-reader video { border-radius: 10px !important; }
 
-        #qr-reader video {
-            border-radius: 12px !important;
-        }
-
-        /* Manual input */
         .manual-input {
             display: flex;
-            margin-top: 16px;
+            margin-top: 14px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1.5px solid #e2e8f0;
         }
 
         .manual-input input {
             flex: 1;
-            padding: 12px 14px;
-            font-family: 'Josefin Sans', monospace;
-            background-color: rgba(128, 128, 128, 0.459);
-            font-size: 14px;
+            padding: 11px 13px;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 13px;
+            border: none;
             outline: none;
-            transition: border-color 0.2s;
+            background: #f8fafc;
+            color: #1e293b;
         }
 
         .manual-input button {
-            padding: 12px 18px;
+            padding: 11px 16px;
             background: var(--primary);
             color: white;
             border: none;
-            font-family: 'Sora', sans-serif;
-            font-size: 14px;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.15s;
             white-space: nowrap;
         }
-
-        .manual-input button:hover {
-            background: #0856bb;
-        }
-
-        /* Result */
-        .result-card {
-            border-radius: 20px;
-            padding: 28px;
-            text-align: center;
-            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: none;
-        }
-
-        .result-card.entrada {
-            background: var(--accent);
-        }
-
-        .result-card.saida {
-            background: var(--accent-red);
-        }
-
-        .result-card.error {
-            background: var(--accent-yellow);
-        }
-
-        .result-card.espera {
-            background: linear-gradient(135deg, #1f1f40 0%, #4F35D2 100%);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        @keyframes popIn {
-            from {
-                transform: scale(0.8);
-                opacity: 0;
-            }
-
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .result-icon {
-            font-size: 52px;
-            margin-bottom: 12px;
-        }
-
-        .result-nome {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .result-codigo {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            opacity: 0.7;
-            margin-bottom: 8px;
-        }
-
-        .result-horario {
-            font-size: 28px;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-            color: white;
-        }
-
-        .result-tipo {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            opacity: 0.9;
-        }
-
-        .result-msg {
-            font-size: 13px;
-            opacity: 0.7;
-            margin-top: 8px;
-        }
-
-        /* Responsável pending */
-        .resp-pending {
-            background: rgba(79, 53, 210, 0.3);
-            border: 2px solid var(--primary);
-            border-radius: 20px;
-            padding: 24px;
-            text-align: center;
-            display: none;
-        }
-
-        .resp-pending h3 {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .resp-pending p {
-            font-size: 13px;
-            opacity: 0.7;
-            margin-bottom: 16px;
-        }
-
-        .cancel-btn {
-            padding: 8px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            font-family: 'Sora', sans-serif;
-            font-size: 13px;
-            cursor: pointer;
-            margin-top: 8px;
-        }
+        .manual-input button:hover { background: var(--primary-dark); }
 
         /* Atividade recente */
         .atividade {
-            margin-top: 20px;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-            box-shadow: 0px 20px 40px black;
-            padding: 50px 20px;
+            background: white;
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 8px rgba(15,23,42,0.06);
         }
 
         .atividade h3 {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--primary);
-            margin-bottom: 14px;
-            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .ativ-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            gap: 9px;
+            padding: 7px 0;
+            border-bottom: 1px solid #f1f5f9;
             font-size: 13px;
         }
 
-        .ativ-item:last-child {
-            border-bottom: none;
-        }
+        .ativ-item:last-child { border-bottom: none; }
 
         .ativ-dot {
-            width: 8px;
-            height: 8px;
+            width: 7px; height: 7px;
             border-radius: 50%;
             flex-shrink: 0;
         }
 
-        .dot-entrada {
-            background: var(--accent);
-        }
-
-        .dot-saida {
-            background: var(--accent-red);
-        }
-
-        .dot-nome-entrada {
-            color: var(--accent);
-        }
-
-        .dot-nome-saida {
-            color: var(--accent-red);
-        }
+        .dot-entrada { background: var(--accent); }
+        .dot-saida   { background: var(--accent-red); }
 
         .ativ-nome {
             flex: 1;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .nome-entrada { color: var(--accent); }
+        .nome-saida   { color: var(--accent-red); }
+
+        .ativ-tipo {
+            font-size: 11px;
+            color: #94a3b8;
             text-transform: capitalize;
         }
 
         .ativ-time {
-            color: black;
             font-size: 11px;
-            font: bold;
-            text-decoration: underline;
-            font-style: italic;
-        }
-
-        .ativ-tipo {
-            text-transform: capitalize;
+            color: #64748b;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
         }
     </style>
 </head>
-
 <body>
+
     <div class="header">
         <div class="brand">
-            <span class="icon">&#x1F514;</span>
+            <div class="brand-icon">&#x1F514;</div>
             <div>
                 <h1>CATECONTROL</h1>
-                <p>Gestão de Controle Paróquia Sagrado Coração de Jesus</p>
+                <p>Paróquia Sagrado Coração de Jesus</p>
             </div>
         </div>
-        <a href="/login" class="admin-link">🔐 Admin</a>
+        <a href="/login" class="admin-link">Admin</a>
     </div>
 
     <div class="reader-container">
+
         <!-- Resultado normal -->
         <div class="result-card" id="resultCard">
             <div class="result-icon" id="resultIcon"></div>
@@ -358,27 +271,30 @@
 
         <!-- Aguardando responsável -->
         <div class="resp-pending" id="respPending">
-            <div style="font-size:40px; margin-bottom:12px">👪</div>
-            <h3>Menor de Idade</h3>
+            <div style="font-size:28px;margin-bottom:10px">&#x1F46A;</div>
+            <h3>Autorização de Saída</h3>
             <p id="respMsg">Apresente o QR Code do responsável para autorizar a saída.</p>
-            <div class="result-horario" style="font-size:18px; margin-top:8px" id="respNome"></div>
+            <div class="resp-nome" id="respNome"></div>
             <button class="cancel-btn" onclick="cancelarResposta()">Cancelar</button>
         </div>
 
-        <!-- Atividade recente -->
-        <div class="atividade">
-            <div class="scanner-box-input">
-                <div class="scanner-title">📷 Aproxime o QR Code no Leitor</div>
-                <div id="qr-reader"></div>
-                <div class="manual-input">
-                    <input type="text" id="manualCode" placeholder="Ou digite o código manualmente..."
-                        onkeypress="if(event.key==='Enter') registrarManual()">
-                    <button onclick="registrarManual()">Registrar</button>
-                </div>
+        <!-- Scanner -->
+        <div class="scanner-wrap">
+            <div class="scanner-title">Aproxime o QR Code no leitor</div>
+            <div id="qr-reader"></div>
+            <div class="manual-input">
+                <input type="text" id="manualCode" placeholder="Ou digite o código manualmente..."
+                    onkeypress="if(event.key==='Enter') registrarManual()">
+                <button onclick="registrarManual()">Registrar</button>
             </div>
-            <h3 class="atividade-title">&#x1F536; Atividade Recente</h3>
+        </div>
+
+        <!-- Atividade -->
+        <div class="atividade">
+            <h3>Atividade Recente</h3>
             <div id="atividadeList"></div>
         </div>
+
     </div>
 
     <script>
@@ -387,12 +303,11 @@
         let lastCode = '';
         let lastTime = 0;
 
-        // QR Scanner
         const html5QrCode = new Html5Qrcode("qr-reader");
 
         html5QrCode.start(
             { facingMode: "environment" },
-            { fps: 5, qrbox: { width: 250, height: 250 } },
+            { fps: 5, qrbox: { width: 240, height: 240 } },
             onScanSuccess
         ).catch(err => {
             console.log("Câmera não disponível:", err);
@@ -400,13 +315,12 @@
 
         function onScanSuccess(decodedText) {
             const now = Date.now();
-            // Throttle: mesmo QR não aceito por 3s na UI
+            // Throttle UI de 3 segundos para não repetir a mesma leitura acidentalmente
             if (decodedText === lastCode && now - lastTime < 3000) return;
             lastCode = decodedText;
             lastTime = now;
 
             if (aguardandoResponsavel) {
-                // Este é o QR do responsável
                 registrar(aguardandoResponsavel, decodedText);
             } else {
                 registrar(decodedText);
@@ -446,14 +360,15 @@
                 card.style.display = 'block';
 
                 if (data.success) {
-                    document.getElementById('resultIcon').textContent = data.tipo === 'entrada' ? '✅' : '👋';
+                    const icones = { entrada: '✓', saida: '←' };
+                    document.getElementById('resultIcon').textContent = data.tipo === 'entrada' ? '✓' : '←';
                     document.getElementById('resultTipo').textContent = data.tipo === 'entrada' ? 'ENTRADA REGISTRADA' : 'SAÍDA REGISTRADA';
                     document.getElementById('resultNome').textContent = data.pessoa.nome;
                     document.getElementById('resultCodigo').textContent = data.pessoa.codigo;
                     document.getElementById('resultHorario').textContent = data.horario;
                     document.getElementById('resultMsg').textContent = data.autorizado_por ? `Autorizado por: ${data.autorizado_por}` : '';
                 } else {
-                    document.getElementById('resultIcon').textContent = '⚠️';
+                    document.getElementById('resultIcon').textContent = '!';
                     document.getElementById('resultTipo').textContent = 'ATENÇÃO';
                     document.getElementById('resultNome').textContent = data.message;
                     document.getElementById('resultCodigo').textContent = '';
@@ -469,6 +384,7 @@
                 carregarAtividade();
             } catch (e) {
                 processando = false;
+                console.error('Erro ao registrar:', e);
             }
         }
 
@@ -490,21 +406,22 @@
         }
 
         async function carregarAtividade() {
-            const data = await fetch('/api/atividade_recente').then(r => r.json());
-            const list = document.getElementById('atividadeList');
-            list.innerHTML = data.map(r => `
-                <div class="ativ-item">
-                    <span class="ativ-dot ${r.tipo === 'entrada' ? 'dot-entrada' : 'dot-saida'}"></span>
-                    <span class="ativ-nome ${r.tipo == 'entrada' ? 'dot-nome-entrada' : 'dot-nome-saida'}">${r.pessoa_nome}</span>
-                    <span class="ativ-tipo ${r.tipo == 'entrada' ? 'dot-nome-entrada' : 'dot-nome-saida'}">${r.tipo}</span>
-                    <span class="ativ-time">${r.horario.split(' ')[1]}</span>
-                </div>
-            `).join('') || '<p style="opacity:0.4;font-size:13px">Nenhum registro ainda.</p>';
+            try {
+                const data = await fetch('/api/atividade_recente').then(r => r.json());
+                const list = document.getElementById('atividadeList');
+                list.innerHTML = data.map(r => `
+                    <div class="ativ-item">
+                        <span class="ativ-dot ${r.tipo === 'entrada' ? 'dot-entrada' : 'dot-saida'}"></span>
+                        <span class="ativ-nome ${r.tipo === 'entrada' ? 'nome-entrada' : 'nome-saida'}">${r.pessoa_nome}</span>
+                        <span class="ativ-tipo">${r.tipo}</span>
+                        <span class="ativ-time">${r.horario.split(' ')[1].substring(0,5)}</span>
+                    </div>
+                `).join('') || '<p style="font-size:13px;color:#94a3b8;padding:8px 0">Nenhum registro ainda.</p>';
+            } catch(e) { console.error('Erro ao carregar atividade:', e); }
         }
 
         carregarAtividade();
         setInterval(carregarAtividade, 15000);
     </script>
 </body>
-
 </html>

@@ -6,9 +6,9 @@ import qrcode
 import io
 import base64
 import os
-import hashlib
 import secrets
 import string
+import re
 from functools import wraps
 
 # ─── TIMEZONE BRASIL ──────────────────────────────────────────────────────────
@@ -21,8 +21,16 @@ def agora_brasilia():
 # ─── APP CONFIG ───────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "chave-super-secreta-dev-troque-em-producao")
+
+secret_key = os.getenv("SECRET_KEY")
+if not secret_key:
+    raise RuntimeError(
+        "Variável de ambiente SECRET_KEY não definida. "
+        "Defina no Railway antes de iniciar a aplicação."
+    )
+app.config['SECRET_KEY'] = secret_key
 app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = os.getenv("FLASK_ENV", "production") == "production"
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 
@@ -34,7 +42,7 @@ if database_url:
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     db_user = os.getenv("DB_USER", "postgres")
-    db_pass = os.getenv("DB_PASSWORD", "1234")
+    db_pass = os.getenv("DB_PASSWORD", "")
     db_host = os.getenv("DB_HOST", "localhost")
     db_name = os.getenv("DB_NAME", "catecontrol")
     app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{db_user}:{db_pass}@{db_host}/{db_name}"
@@ -47,7 +55,7 @@ db = SQLAlchemy(app)
 
 def calcular_tipo_por_idade(data_nascimento_str: str) -> str:
     """
-    Determina o tipo da pessoa pelo catequizando/adulto com base na data de nascimento.
+    Determina o tipo da pessoa:
       - Sem data → 'catequizando' (padrão seguro)
       - < 18 anos → 'catequizando'
       - >= 18 anos → 'adulto'
@@ -138,26 +146,34 @@ class Registro(db.Model):
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    # bcrypt hash armazenado como string (60 chars)
     password_hash = db.Column(db.String(200), nullable=False)
 
-    def set_password(self, password):
-        self.password_hash = hashlib.sha256(password.encode()).hexdigest()
+    def set_password(self, password: str):
+        """Hash com bcrypt via werkzeug (disponível via Flask)."""
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
-    def check_password(self, password):
-        return self.password_hash == hashlib.sha256(password.encode()).hexdigest()
+    def check_password(self, password: str) -> bool:
+        from werkzeug.security import check_password_hash
+        return check_password_hash(self.password_hash, password)
 
 
 with app.app_context():
     db.create_all()
 
     if not Admin.query.filter_by(username="admin").first():
+        senha_inicial = os.getenv("ADMIN_INITIAL_PASSWORD")
+        if not senha_inicial:
+            raise RuntimeError(
+                "Variável ADMIN_INITIAL_PASSWORD não definida. "
+                "Defina no Railway para criar o admin padrão com segurança."
+            )
         novo_admin = Admin(username="admin")
-        senha_inicial = os.getenv("ADMIN_INITIAL_PASSWORD", "123456")
         novo_admin.set_password(senha_inicial)
         db.session.add(novo_admin)
         db.session.commit()
-        print(f"Admin padrão criado! Usuário: admin | Senha: {senha_inicial}")
-        print("⚠️  TROQUE A SENHA EM PRODUCAO!")
+        print("Admin padrão criado via ADMIN_INITIAL_PASSWORD.")
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -186,10 +202,11 @@ def gerar_codigo(tipo='catequizando'):
 
 
 def pode_registrar(codigo):
-    um_minuto_atras = agora_brasilia() - timedelta(minutes=1)
+    """Impede re-registro dentro de 30 segundos."""
+    trinta_seg_atras = agora_brasilia() - timedelta(seconds=30)
     return Registro.query.filter(
         Registro.pessoa_codigo == codigo,
-        Registro.horario > um_minuto_atras
+        Registro.horario > trinta_seg_atras
     ).first() is None
 
 
@@ -201,6 +218,11 @@ def gerar_qr_base64(codigo):
     buffer = io.BytesIO()
     img.save(buffer, format='PNG')
     return base64.b64encode(buffer.getvalue()).decode()
+
+
+def normalizar_nome(nome: str) -> str:
+    """Remove espaços extras e normaliza para comparação de duplicatas."""
+    return re.sub(r'\s+', ' ', nome.strip()).upper()
 
 
 # ─── ROTAS PÚBLICAS ───────────────────────────────────────────────────────────
@@ -222,6 +244,10 @@ def registrar():
     if not codigo:
         return jsonify({'success': False, 'message': 'Código não informado.'}), 400
 
+    # Limita tamanho para evitar busca absurda
+    if len(codigo) > 30:
+        return jsonify({'success': False, 'message': 'Código inválido.'}), 400
+
     pessoa = Pessoa.query.filter_by(codigo=codigo, ativo=True).first()
     if not pessoa:
         return jsonify({'success': False, 'message': 'QR Code não reconhecido ou pessoa inativa.'}), 404
@@ -230,7 +256,7 @@ def registrar():
     tipo_registro = 'entrada' if (ultimo is None or ultimo.tipo == 'saida') else 'saida'
 
     if not pode_registrar(codigo):
-        return jsonify({'success': False, 'message': 'Aguarde 1 minuto para registrar novamente.'}), 429
+        return jsonify({'success': False, 'message': 'Aguarde 30 segundos para registrar novamente.'}), 429
 
     # Catequizando com responsável exige QR do responsável na saída
     if tipo_registro == 'saida' and pessoa.tipo == 'catequizando' and pessoa.responsavel_codigo:
@@ -238,7 +264,7 @@ def registrar():
             return jsonify({
                 'success': False,
                 'requer_responsavel': True,
-                'message': f'{pessoa.nome} precisa da autorização do responsável para sair.',
+                'message': f'Apresente o QR Code do responsável para autorizar a saída de {pessoa.nome}.',
                 'pessoa': pessoa.to_dict()
             }), 200
 
@@ -296,8 +322,15 @@ def login():
         data = request.get_json(silent=True)
         if not data:
             return jsonify({'success': False, 'message': 'Requisição inválida'}), 400
-        admin = Admin.query.filter_by(username=(data.get('username') or '').strip()).first()
-        if admin and admin.check_password(data.get('password') or ''):
+        username = (data.get('username') or '').strip()
+        password = data.get('password') or ''
+
+        # Limita tamanho para evitar abuse
+        if len(username) > 80 or len(password) > 200:
+            return jsonify({'success': False, 'message': 'Credenciais inválidas'}), 401
+
+        admin = Admin.query.filter_by(username=username).first()
+        if admin and admin.check_password(password):
             session.permanent = True
             session['admin_logged_in'] = True
             session['admin_username'] = admin.username
@@ -398,17 +431,31 @@ def api_cadastrar_pessoa():
     if not data:
         return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
 
-    nome = (data.get('nome') or '').strip()
-    if not nome:
+    nome_raw = (data.get('nome') or '').strip()
+    if not nome_raw:
         return jsonify({'success': False, 'message': 'Nome é obrigatório'}), 400
+
+    # Armazena em maiúsculas
+    nome = normalizar_nome(nome_raw)
 
     tipo_base = data.get('tipo', 'catequizando')
     if tipo_base not in ('catequizando', 'responsavel'):
         return jsonify({'success': False, 'message': 'Tipo inválido'}), 400
 
+    # ── VALIDAÇÃO DE NOME DUPLICADO ────────────────────────────────────────────
+    duplicado = Pessoa.query.filter(
+        db.func.upper(Pessoa.nome) == nome,
+        Pessoa.ativo == True
+    ).first()
+    if duplicado:
+        return jsonify({
+            'success': False,
+            'message': f'Já existe uma pessoa cadastrada com o nome "{nome}" (código: {duplicado.codigo}). '
+                       f'Verifique a lista antes de cadastrar novamente.'
+        }), 409
+
     data_nascimento = data.get('data_nascimento') or None
 
-    # Determina tipo final automaticamente pela data de nascimento
     if tipo_base == 'catequizando':
         tipo_final = calcular_tipo_por_idade(data_nascimento)
     else:
@@ -445,10 +492,11 @@ def api_atualizar_pessoa(pessoa_id):
     if not data:
         return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
 
-    nome = (data.get('nome') or '').strip()
-    if not nome:
+    nome_raw = (data.get('nome') or '').strip()
+    if not nome_raw:
         return jsonify({'success': False, 'message': 'Nome é obrigatório'}), 400
 
+    nome = normalizar_nome(nome_raw)
     pessoa.nome = nome
     pessoa.telefone = (data.get('telefone') or '')[:20] or None
     pessoa.email = (data.get('email') or '')[:120] or None
@@ -458,7 +506,6 @@ def api_atualizar_pessoa(pessoa_id):
     nova_dt_nasc = data.get('data_nascimento') or None
     pessoa.data_nascimento = nova_dt_nasc
 
-    # Recalcula catequizando/adulto ao editar (mantém responsavel intacto)
     if pessoa.tipo in ('catequizando', 'adulto'):
         pessoa.tipo = calcular_tipo_por_idade(nova_dt_nasc)
 
@@ -484,7 +531,11 @@ def api_deletar_pessoa(pessoa_id):
 @app.route('/api/admin/qrcode/<path:codigo>')
 @login_required
 def api_qrcode(codigo):
-    return jsonify({'qr': gerar_qr_base64(codigo)})
+    # Valida que o código existe e pertence a pessoa ativa
+    pessoa = Pessoa.query.filter_by(codigo=codigo.upper(), ativo=True).first()
+    if not pessoa:
+        return jsonify({'error': 'Pessoa não encontrada'}), 404
+    return jsonify({'qr': gerar_qr_base64(pessoa.codigo)})
 
 
 @app.route('/api/admin/relatorio/<path:codigo>')
@@ -561,6 +612,38 @@ def api_deletar_catequista_patio(cid):
     c.ativo = False
     db.session.commit()
     return jsonify({'success': True})
+
+
+# ─── TROCA DE SENHA (via painel admin) ────────────────────────────────────────
+
+@app.route('/api/admin/trocar_senha', methods=['POST'])
+@login_required
+def api_trocar_senha():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
+
+    senha_atual = data.get('senha_atual') or ''
+    nova_senha = data.get('nova_senha') or ''
+    confirmar = data.get('confirmar') or ''
+
+    if not senha_atual or not nova_senha or not confirmar:
+        return jsonify({'success': False, 'message': 'Preencha todos os campos.'}), 400
+
+    if nova_senha != confirmar:
+        return jsonify({'success': False, 'message': 'Nova senha e confirmação não coincidem.'}), 400
+
+    if len(nova_senha) < 8:
+        return jsonify({'success': False, 'message': 'A nova senha deve ter pelo menos 8 caracteres.'}), 400
+
+    username = session.get('admin_username')
+    admin = Admin.query.filter_by(username=username).first()
+    if not admin or not admin.check_password(senha_atual):
+        return jsonify({'success': False, 'message': 'Senha atual incorreta.'}), 401
+
+    admin.set_password(nova_senha)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Senha alterada com sucesso!'})
 
 
 # ─── INIT ─────────────────────────────────────────────────────────────────────

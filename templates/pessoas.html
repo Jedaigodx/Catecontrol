@@ -4,24 +4,27 @@
 {% block body %}
 <div class="sidebar">
     <div class="sidebar-brand">
-        <div class="icon">&#X1F514;</div>
+        <div class="brand-icon">&#x1F514;</div>
         <div>
             <h1>CATECONTROL</h1>
             <p>Paróquia Sagrado Coração de Jesus</p>
         </div>
     </div>
     <nav class="sidebar-nav">
-        <a class="nav-item" href="/admin"><span class="nav-icon">📊</span> Dashboard</a>
-        <a class="nav-item active" href="/admin/pessoas"><span class="nav-icon">👥</span> Pessoas</a>
-        <a class="nav-item" href="/admin/cadastrar"><span class="nav-icon">➕</span> Cadastrar</a>
-        <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">📋</span> Relatórios</a>
-        <a class="nav-item" href="/"><span class="nav-icon">📷</span> Leitor QR</a>
+        <a class="nav-item" href="/admin"><span class="nav-icon">▦</span> Dashboard</a>
+        <a class="nav-item active" href="/admin/pessoas"><span class="nav-icon">◉</span> Pessoas</a>
+        <a class="nav-item" href="/admin/cadastrar"><span class="nav-icon">＋</span> Cadastrar</a>
+        <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">≡</span> Relatórios</a>
+        <a class="nav-item" href="/"><span class="nav-icon">◎</span> Leitor QR</a>
     </nav>
     <div class="sidebar-footer">
         <div class="admin-info">
-            <div class="admin-avatar">👤</div>
-            <div><span>Admin</span><small>Administrador</small></div>
-            <button class="logout-btn" onclick="window.location='/logout'">⏻</button>
+            <div class="admin-avatar">A</div>
+            <div>
+                <span class="admin-name">Admin</span>
+                <small class="admin-role">Administrador</small>
+            </div>
+            <button class="logout-btn" onclick="window.location='/logout'" title="Sair">⏻</button>
         </div>
     </div>
 </div>
@@ -29,23 +32,23 @@
 <div class="main-content">
     <div class="page-header flex items-center justify-between">
         <div>
-            <h2>Pessoas Cadastradas</h2>
-            <p>Gerencie os catequizandos e responsáveis</p>
+            <h2>PESSOAS CADASTRADAS</h2>
+            <p>Gerencie catequizandos e responsáveis</p>
         </div>
-        <a href="/admin/cadastrar" class="btn btn-primary" style="text-decoration:none">➕ Novo Cadastro</a>
+        <a href="/admin/cadastrar" class="btn btn-primary" style="text-decoration:none">+ Novo Cadastro</a>
     </div>
 
     <div class="card">
         <div class="flex items-center justify-between mb-4" style="flex-wrap:wrap;gap:10px">
-            <div class="search-bar" style="flex:1;max-width:380px">
-                <span class="search-icon">🔍</span>
+            <div class="search-bar" style="flex:1;max-width:360px">
+                <span class="search-icon">⌕</span>
                 <input type="text" placeholder="Buscar por nome ou código..." id="search" oninput="buscar()">
             </div>
             <div class="flex gap-2">
                 <select id="filtroTipo" onchange="buscar()"
-                    style="padding:10px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none;cursor:pointer">
+                    style="padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Josefin Sans',sans-serif;font-size:13px;outline:none;cursor:pointer;background:white;color:var(--text)">
                     <option value="">Todos os tipos</option>
-                    <option value="catequizando">Criança / Adolescente</option>
+                    <option value="catequizando">Catequizando</option>
                     <option value="adulto">Adulto</option>
                     <option value="responsavel">Responsável</option>
                 </select>
@@ -60,13 +63,13 @@
                         <th>Nome</th>
                         <th>Tipo</th>
                         <th>Turma</th>
-                        <th>Catequista Responsável</th>
+                        <th>Catequista</th>
                         <th>Telefone</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyPessoas">
-                    <tr><td colspan="8" class="empty-state">Carregando...</td></tr>
+                    <tr><td colspan="7" class="empty-state">Carregando...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -75,16 +78,16 @@
 
 <!-- ── Modal Editar ── -->
 <div class="modal-overlay" id="modalEditar">
-    <div class="modal" style="width:560px">
+    <div class="modal" style="width:540px">
         <div class="modal-header">
-            <h3>✏️ Editar Pessoa</h3>
+            <h3>Editar Pessoa</h3>
             <button class="modal-close" onclick="fecharModal()">✕</button>
         </div>
         <input type="hidden" id="editId">
         <input type="hidden" id="editTipo">
 
         <div class="form-row">
-            <div class="form-group"><label>Nome Completo</label><input type="text" id="editNome"></div>
+            <div class="form-group"><label>Nome Completo</label><input type="text" id="editNome" style="text-transform:uppercase"></div>
             <div class="form-group"><label>Telefone</label><input type="text" id="editTelefone"></div>
         </div>
         <div class="form-row">
@@ -92,28 +95,27 @@
             <div class="form-group"><label>Data de Nascimento</label><input type="date" id="editDtNasc"></div>
         </div>
 
-        <!-- Campos exclusivos de catequizando/adulto -->
         <div id="groupCrianca" style="display:none">
             <div class="form-group">
-                <label>🏷️ Turma</label>
+                <label>Turma</label>
                 <input type="text" id="editTurma" placeholder="Ex: 1º Ano, Crisma...">
             </div>
             <div class="form-group">
-                <label>👨 Responsável vinculado</label>
-                <select id="editResponsavel" style="width:100%;padding:11px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none">
+                <label>Responsável Vinculado</label>
+                <select id="editResponsavel" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Josefin Sans',sans-serif;font-size:13px;outline:none">
                     <option value="">— Nenhum —</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>🏫 Catequista Responsável</label>
-                <select id="editCatequistaPatio" style="width:100%;padding:11px 14px;border:2px solid #E4DFFF;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;outline:none">
+                <label>Catequista Responsável</label>
+                <select id="editCatequistaPatio" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Josefin Sans',sans-serif;font-size:13px;outline:none">
                     <option value="">— Nenhum —</option>
                 </select>
             </div>
         </div>
 
-        <div class="flex gap-2" style="margin-top:8px">
-            <button class="btn btn-primary" style="flex:1" onclick="salvarEdicao()">💾 Salvar</button>
+        <div class="flex gap-2" style="margin-top:10px">
+            <button class="btn btn-primary" style="flex:1" onclick="salvarEdicao()">Salvar Alterações</button>
             <button class="btn btn-outline" onclick="fecharModal()">Cancelar</button>
         </div>
     </div>
@@ -121,20 +123,18 @@
 
 <!-- ── Modal QR Code ── -->
 <div class="modal-overlay" id="modalQR">
-    <div class="modal" style="text-align:center">
+    <div class="modal" style="text-align:center;max-width:340px">
         <div class="modal-header">
-            <h3>📱 QR CODE</h3>
+            <h3>QR CODE</h3>
             <button class="modal-close" onclick="fecharModalQR()">✕</button>
         </div>
-        <div style="border:2px solid #777">
-            <p id="qrNome" style="font-weight:700;font-size:18px;text-transform:capitalize;margin-top:20px;margin-bottom:2px"></p>
-            <p id="qrCodigo" class="mono" style="margin-bottom:4px;color:#6B6490;font-size:13px"></p>
-            <p id="qrTurma" style="font-size:12px;color:#0f6be4;margin-bottom:10px;font-weight:600"></p>
-            <img id="qrImg" style="max-width:250px">
+        <div style="border:1.5px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+            <p id="qrNome" style="font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:3px"></p>
+            <p id="qrCodigo" class="mono" style="margin-bottom:3px;color:var(--text-muted);font-size:12px"></p>
+            <p id="qrTurma" style="font-size:12px;color:var(--primary);margin-bottom:12px;font-weight:600"></p>
+            <img id="qrImg" style="max-width:220px;border-radius:8px">
         </div>
-        <div style="margin-top:16px">
-            <button class="btn btn-primary" onclick="imprimirQR()">🖨️ Imprimir</button>
-        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="imprimirQR()">Imprimir Crachá</button>
     </div>
 </div>
 {% endblock %}
@@ -154,44 +154,42 @@ async function carregarDados() {
     renderizar(todasPessoas);
 }
 
-function tipoIcone(tipo) {
-    const mapa = {
-        catequizando: 'Criança / Adolescente',
-        adulto: 'Adulto',
-        responsavel: '👨 Responsável'
-    };
-    return mapa[tipo] || tipo;
+function tipoLabel(tipo) {
+    return { catequizando: 'Catequizando', adulto: 'Adulto', responsavel: 'Responsável' }[tipo] || tipo;
 }
 
 function renderizar(pessoas) {
     const tbody = document.getElementById('tbodyPessoas');
 
     if (!pessoas.length) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👥</div><p>Nenhuma pessoa encontrada</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>Nenhuma pessoa encontrada</p></div></td></tr>';
         return;
     }
 
     tbody.innerHTML = pessoas.map(p => {
         const turmaLabel = p.turma
-            ? `<span style="background:#e8f0ff;color:#0f6be4;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${p.turma}</span>`
-            : '<span style="color:#adadad">—</span>';
+            ? `<span style="background:#eff6ff;color:#1d4ed8;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">${p.turma}</span>`
+            : '<span style="color:var(--text-muted)">—</span>';
 
         const catLabel = p.catequista_patio_nome
-            ? `<span style="background:#e8fff5;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">👤 ${p.catequista_patio_nome}</span>`
-            : '<span style="color:#adadad">—</span>';
+            ? `<span style="background:#ecfdf5;color:#16a34a;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">${p.catequista_patio_nome}</span>`
+            : '<span style="color:var(--text-muted)">—</span>';
 
         return `<tr>
-            <td><span class="mono" style="font-weight:700;color:#0f6be4">${p.codigo}</span></td>
-            <td style="vertical-align:middle"><strong style="text-transform:capitalize;display:block">${p.nome}</strong>${p.email ? `<small style="color:#9ca3af;font-size:11px">${p.email}</small>` : ''}</td>
-            <td><span class="badge badge-${p.tipo}">${tipoIcone(p.tipo)}</span></td>
-            <td>${p.tipo !== 'responsavel' ? turmaLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
-            <td>${p.tipo !== 'responsavel' ? catLabel : '<span style="color:#adadad;font-size:12px">N/A</span>'}</td>
-            <td>${p.telefone || '—'}</td>
+            <td><span class="mono" style="font-weight:700;color:var(--primary);font-size:12px">${p.codigo}</span></td>
+            <td>
+                <strong style="text-transform:uppercase;font-size:13px">${p.nome}</strong>
+                ${p.email ? `<br><small style="color:var(--text-muted);font-size:11px">${p.email}</small>` : ''}
+            </td>
+            <td><span class="badge badge-${p.tipo}">${tipoLabel(p.tipo)}</span></td>
+            <td>${p.tipo !== 'responsavel' ? turmaLabel : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+            <td>${p.tipo !== 'responsavel' ? catLabel : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+            <td style="font-size:13px">${p.telefone || '—'}</td>
             <td>
                 <div class="flex gap-2">
-                    <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome}','${p.turma || ''}')">Ver QR</button>
-                    <button class="btn btn-sm btn-primary" onclick='abrirEditar(${JSON.stringify(p).replace(/'/g,"&#39;")})'>✏️</button>
-                    <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome.replace(/'/g,"\\'")}')">🗑️</button>
+                    <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome}','${(p.turma||'').replace(/'/g,"\\'")}')">QR</button>
+                    <button class="btn btn-sm btn-primary" onclick='abrirEditar(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome.replace(/'/g,"\\'")}')">Remover</button>
                 </div>
             </td>
         </tr>`;
@@ -220,7 +218,6 @@ function abrirEditar(p) {
     const grupoExtra = document.getElementById('groupCrianca');
     if (p.tipo === 'catequizando' || p.tipo === 'adulto') {
         grupoExtra.style.display = 'block';
-
         document.getElementById('editTurma').value = p.turma || '';
 
         const selResp = document.getElementById('editResponsavel');
@@ -244,11 +241,13 @@ async function salvarEdicao() {
     const tipo = document.getElementById('editTipo').value;
 
     const body = {
-        nome: document.getElementById('editNome').value,
+        nome: document.getElementById('editNome').value.trim(),
         telefone: document.getElementById('editTelefone').value,
         email: document.getElementById('editEmail').value,
         data_nascimento: document.getElementById('editDtNasc').value,
     };
+
+    if (!body.nome) { showToast('Nome é obrigatório.', 'error'); return; }
 
     if (tipo === 'catequizando' || tipo === 'adulto') {
         body.turma = document.getElementById('editTurma').value.trim();
@@ -256,7 +255,6 @@ async function salvarEdicao() {
         const catId = document.getElementById('editCatequistaPatio').value;
         body.catequista_patio_id = catId ? parseInt(catId) : null;
     } else {
-        // Responsável: garante que campos extras não sejam enviados sujos
         body.turma = null;
         body.responsavel_codigo = null;
         body.catequista_patio_id = null;
@@ -264,7 +262,7 @@ async function salvarEdicao() {
 
     const res = await api(`/api/admin/pessoas/${id}`, { method: 'PUT', body: JSON.stringify(body) });
     if (res && res.success !== false) {
-        showToast('Dados atualizados com sucesso!', 'success');
+        showToast('Dados atualizados!', 'success');
         fecharModal();
         carregarDados();
     } else {
@@ -282,7 +280,7 @@ async function deletar(id, nome) {
 async function abrirQR(codigo, nome, turma) {
     document.getElementById('qrNome').textContent = nome;
     document.getElementById('qrCodigo').textContent = codigo;
-    document.getElementById('qrTurma').textContent = turma ? `📚 Turma: ${turma}` : '';
+    document.getElementById('qrTurma').textContent = turma ? `Turma: ${turma}` : '';
     document.getElementById('modalQR').classList.add('open');
     const data = await api(`/api/admin/qrcode/${codigo}`);
     document.getElementById('qrImg').src = 'data:image/png;base64,' + data.qr;
@@ -290,164 +288,130 @@ async function abrirQR(codigo, nome, turma) {
 
 function fecharModalQR() { document.getElementById('modalQR').classList.remove('open'); }
 
+/**
+ * Imprime o crachá.
+ * - nome em maiúsculas
+ * - sem campo de tipo (adulto/criança/responsável)
+ * - turma exibida se houver
+ */
 function imprimirQR() {
-    const nome = document.getElementById('qrNome').textContent;
+    const nome   = document.getElementById('qrNome').textContent;
     const codigo = document.getElementById('qrCodigo').textContent;
-    const turma = document.getElementById('qrTurma').textContent;
-    const src = document.getElementById('qrImg').src;
+    const turma  = document.getElementById('qrTurma').textContent.replace('Turma: ', '').trim();
+    const src    = document.getElementById('qrImg').src;
 
     const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Crachá - CateControl</title>
+    <style>
+        @page { size: 54mm 86mm; margin: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    win.document.write(`
-    <html>
-    <head>
-        <title>Crachá - CateControl</title>
-        <style>
-            @page { size: A4; margin: 0; }
+        body {
+            width: 54mm; height: 86mm;
+            display: flex; align-items: center; justify-content: center;
+            background: white;
+            font-family: Arial, Helvetica, sans-serif;
+        }
 
-            body {
-                margin: 0;
-                height: 100vh;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                background: #eef1ff;
-                font-family: 'Segoe UI', Arial, sans-serif;
-            }
+        .card {
+            width: 54mm; height: 86mm;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1.5px solid #4F35D2;
+            border-radius: 6px;
+        }
 
-            .card {
-                width: 54mm;
-                height: 86mm;
-                background: white;
-                border-radius: 14px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-                overflow: hidden;
-                display: flex;
-                flex-direction: column;
-                position: relative;
-                border: 2px solid #4F35D2;
-            }
+        .top {
+            background: linear-gradient(135deg, #0f6be4, #4F35D2);
+            padding: 7px 6px;
+            text-align: center;
+            color: white;
+        }
 
-            .top {
-                background: linear-gradient(135deg, #4F35D2, #6D5AFD);
-                padding: 8px;
-                text-align: center;
-                color: white;
-            }
+        .top h1 {
+            font-size: 6.5pt;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
 
-            .top h1 {
-                font-size: 7pt;
-                margin: 0;
-                font-weight: 600;
-                letter-spacing: .5px;
-            }
+        .content {
+            flex: 1;
+            padding: 6px 4px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
 
-    .content {
-                flex: 1;
-                padding: 4px 6px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-            }
+        .qr img {
+            width: 40mm; height: 40mm;
+            display: block;
+            margin-bottom: 5px;
+        }
 
-            .qr {
-                margin-bottom: 6px;
-            }
+        .codigo {
+            font-family: 'Courier New', monospace;
+            font-size: 7pt;
+            color: #555;
+            margin-bottom: 3px;
+            letter-spacing: 0.4px;
+        }
 
-            .qr img {
-                width: 42mm;
-                height: 42mm;
-            }
+        .nome {
+            font-size: 9.5pt;
+            font-weight: 700;
+            color: #111;
+            line-height: 1.15;
+            word-break: break-word;
+            text-transform: uppercase;
+        }
 
-            .codigo {
-                font-family: monospace;
-                font-size: 8pt;
-                color: #666;
-                margin-bottom: 2px;
-                letter-spacing: .5px;
-            }
+        .turma {
+            font-size: 7.5pt;
+            margin-top: 3px;
+            color: #0f6be4;
+            font-weight: 600;
+            word-break: break-word;
+        }
 
-            .nome {
-                font-size: 10pt;
-                font-weight: bold;
-                color: #222;
-                text-transform: capitalize;
-                line-height: 1.1;
-                max-width: 100%;
-                word-wrap: break-word;
-            }
-
-            .turma {
-                font-size: 8pt;
-                margin-top: 2px;
-                color: #0f6be4;
-                font-weight: 600;
-                max-width: 100%;
-                word-wrap: break-word;
-            }
-
-            .footer {
-                font-size: 6pt;
-                color: #666;
-                text-align: center;
-                padding: 4px;
-                border-top: 1px solid #eee;
-            }
-
-            .watermark {
-                position: absolute;
-                bottom: 8mm;
-                right: -10mm;
-                transform: rotate(-30deg);
-                font-size: 20pt;
-                color: rgba(79,53,210,0.05);
-                font-weight: bold;
-            }
-
-        </style>
-    </head>
-    <body>
-
-        <div class="card">
-
-            <div class="top">
-                <h1>Paróquia Sagrado Coração de Jesus</h1>
-            </div>
-
-            <div class="content">
-                <div class="qr">
-                    <img src="${src}">
-                </div>
-
-                <div>
-                    <div class="codigo">${codigo}</div>
-                    <div class="nome">${nome}</div>
-                    <div class="turma">${turma}</div>
-                </div>
-            </div>
-
-            <div class="footer">
-                Apresente no leitor para registrar entrada e saída
-            </div>
-
-            <div class="watermark">CateControl</div>
-
+        .footer {
+            font-size: 5.5pt;
+            color: #888;
+            text-align: center;
+            padding: 5px 4px;
+            border-top: 1px solid #eee;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="top">
+            <h1>Paróquia Sagrado Coração de Jesus</h1>
         </div>
-
-        <script>
-            window.onload = function() {
-                window.print();
-            }
-        <\/script>
-
-    </body>
-    </html>
-    `);
-
+        <div class="content">
+            <div class="qr"><img src="${src}"></div>
+            <div class="codigo">${codigo}</div>
+            <div class="nome">${nome}</div>
+            ${turma ? `<div class="turma">${turma}</div>` : ''}
+        </div>
+        <div class="footer">
+            Apresente no leitor para registrar<br>entrada e saída
+        </div>
+    </div>
+    <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`);
     win.document.close();
 }
+
 carregarDados();
 </script>
 {% endblock %}

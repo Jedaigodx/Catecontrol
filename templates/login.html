@@ -1,29 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CateControl</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #0f6be4;
             --primary-dark: #0856bb;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Josefin Sans', sans-serif;
-            background: linear-gradient(rgba(255, 255, 255, 1), rgb(161, 161, 161));
+            background: #f0f4fb;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -31,150 +25,156 @@
         }
 
         .login-box {
-            background: rgba(255, 255, 255, 0.589);
-            border-radius: 24px;
-            padding: 65px 40px;
-            width: 450px;
-            box-shadow: 0 24px 80px rgba(170, 170, 170, 0.658);
+            background: white;
+            border-radius: 18px;
+            padding: 48px 40px;
+            width: 420px;
+            max-width: 95vw;
+            box-shadow: 0 4px 32px rgba(15,23,42,0.1);
+            border: 1px solid #e2e8f0;
         }
 
         .logo {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 55px;
-        }
-
-        .logo .caixa_de_marca {
-            display: block;
             text-align: center;
-            font: bolder;
+            margin-bottom: 36px;
         }
 
-        .logo .icon {
-            font-size: 50px;
+        .logo .brand-icon {
+            width: 52px; height: 52px;
+            background: #eff6ff;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px;
+            margin: 0 auto 14px;
         }
 
         .logo h1 {
-            font-size: 30px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--primary);
+            letter-spacing: 1px;
         }
 
         .logo p {
-            color: #6B6490;
-            font-size: 14px;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-top: 3px;
         }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
+        .form-group { margin-bottom: 14px; }
 
         .form-group label {
             display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #6B6490;
-            margin-bottom: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .form-group input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #E4DFFF;
-            border-radius: 12px;
-            font-family: 'Sora', sans-serif;
+            padding: 11px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Josefin Sans', sans-serif;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.15s;
+            background: #f8fafc;
+            color: #1e293b;
         }
 
         .form-group input:focus {
             border-color: var(--primary);
+            background: white;
         }
 
         .btn-login {
-            padding: 14px 20px;
+            width: 100%;
+            padding: 13px;
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-family: 'Josefin Sans', sans-serif;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 8px;
+            transition: background 0.15s;
+            margin-top: 6px;
+            letter-spacing: 0.3px;
         }
 
-        .btn-login:hover {
-            background: var(--primary-dark);
-        }
+        .btn-login:hover { background: var(--primary-dark); }
 
         .error-msg {
             text-transform: uppercase;
             color: #dc2626;
-            font: bolder;
-            font-size: 13px;
+            font-weight: 700;
+            font-size: 12px;
             text-align: center;
-            margin-top: 12px;   
+            margin-top: 12px;
             display: none;
+            letter-spacing: 0.3px;
         }
 
-        .reader-link {
+        .links {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 18px;
             font-size: 13px;
-            color: #6B6490;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
         }
 
-        .reader-link a {
+        .links a {
             color: var(--primary);
             text-decoration: none;
             font-weight: 600;
+            font-size: 12px;
         }
 
-        .btns_login {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-        }
+        .links a:hover { text-decoration: underline; }
     </style>
 </head>
-
 <body>
     <div class="login-box">
         <div class="logo">
-            <div class="icon">
-                &#x1F514;
-            </div>
-            <div class="caixa_de_marca">
-                <h1>CATECONTROL</h1>
-                <p>Sistema de Gestão de Catequese</p>
-            </div>
+            <div class="brand-icon">&#x1F514;</div>
+            <h1>CATECONTROL</h1>
+            <p>Sistema de Gestão de Catequese</p>
         </div>
+
         <div class="form-group">
             <label for="username">Usuário</label>
-            <input type="text" id="username" placeholder="" autocomplete="username">
+            <input type="text" id="username" autocomplete="username" placeholder="admin">
         </div>
         <div class="form-group">
             <label for="password">Senha</label>
-            <input type="password" id="password" placeholder="" autocomplete="current-password">
+            <input type="password" id="password" autocomplete="current-password">
         </div>
-        <div class="btns_login">
-            <button class="btn-login" onclick="login()">Entrar no Painel</button>
-            <div class="reader-link">
-                <a href="/">← Leitor de QR Code</a>
-            </div>
-        </div>
+
+        <button class="btn-login" onclick="login()">Entrar no Painel</button>
         <p class="error-msg" id="errorMsg">Usuário ou senha incorretos.</p>
+
+        <div class="links">
+            <a href="/">Leitor de QR Code</a>
+            <a href="/admin/trocar_senha_page" id="linkTrocarSenha" style="display:none">Trocar Senha</a>
+        </div>
     </div>
+
     <script>
         document.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+
         async function login() {
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
+            if (!username || !password) {
+                document.getElementById('errorMsg').style.display = 'block';
+                return;
+            }
             const res = await fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -189,5 +189,4 @@
         }
     </script>
 </body>
-
 </html>

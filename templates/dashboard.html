@@ -4,23 +4,26 @@
 {% block body %}
 <div class="sidebar">
     <div class="sidebar-brand">
-        <div class="icon">&#X1F514;</div>
+        <div class="brand-icon">&#x1F514;</div>
         <div>
             <h1>CATECONTROL</h1>
             <p>Paróquia Sagrado Coração de Jesus</p>
         </div>
     </div>
     <nav class="sidebar-nav">
-        <a class="nav-item active" href="/admin"><span class="nav-icon">📊</span> Dashboard</a>
-        <a class="nav-item" href="/admin/pessoas"><span class="nav-icon">&#X1F464;</span> Pessoas</a>
-        <a class="nav-item" href="/admin/cadastrar"><span class="nav-icon">➕</span> Cadastrar</a>
-        <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">📋</span> Relatórios</a>
-        <a class="nav-item" href="/"><span class="nav-icon">📷</span> Leitor QR</a>
+        <a class="nav-item active" href="/admin"><span class="nav-icon">▦</span> Dashboard</a>
+        <a class="nav-item" href="/admin/pessoas"><span class="nav-icon">◉</span> Pessoas</a>
+        <a class="nav-item" href="/admin/cadastrar"><span class="nav-icon">＋</span> Cadastrar</a>
+        <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">≡</span> Relatórios</a>
+        <a class="nav-item" href="/"><span class="nav-icon">◎</span> Leitor QR</a>
     </nav>
     <div class="sidebar-footer">
         <div class="admin-info">
-            <div class="admin-avatar">👤</div>
-            <div><span>Admin</span><small>Administrador</small></div>
+            <div class="admin-avatar">A</div>
+            <div>
+                <span class="admin-name">Admin</span>
+                <small class="admin-role">Administrador</small>
+            </div>
             <button class="logout-btn" onclick="window.location='/logout'" title="Sair">⏻</button>
         </div>
     </div>
@@ -29,12 +32,12 @@
 <div class="main-content">
     <div class="page-header flex items-center justify-between">
         <div>
-            <h2>DASHBOARD — VISÃO GERAL</h2>
-            <p>Acompanhe as estatísticas de presença em tempo real</p>
+            <h2>DASHBOARD</h2>
+            <p>Visão geral das presenças em tempo real</p>
         </div>
         <div class="flex gap-2 items-center">
-            <input type="date" id="dateFiltro" class="btn" style="cursor:pointer; border:2px solid #E4DFFF; background:white; font-family:Sora,sans-serif;">
-            <button class="btn btn-primary" onclick="exportarCSV()">⬇ Exportar</button>
+            <input type="date" id="dateFiltro" class="btn" style="cursor:pointer;border:1.5px solid var(--border);background:white;font-family:'Josefin Sans',sans-serif;color:var(--text)">
+            <button class="btn btn-primary" onclick="exportarCSV()">Exportar CSV</button>
         </div>
     </div>
 
@@ -42,23 +45,23 @@
     <div class="stat-cards">
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-icon" style="background:#EEF2FF; color:#4F35D2">🚪</div>
-                <span class="stat-badge badge-green" id="pctEntradas">+0%</span>
+                <div class="stat-icon" style="background:#eff6ff;color:#2563eb;font-size:16px">→</div>
+                <span class="stat-badge badge-green" id="pctEntradas">Hoje</span>
             </div>
             <div class="stat-label">Entradas Hoje</div>
             <div class="stat-value" id="entradasHoje">—</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-icon" style="background:#FFF0F0; color:#dc2626">🚶</div>
-                <span class="stat-badge badge-blue" id="pctSaidas">+0%</span>
+                <div class="stat-icon" style="background:#fef2f2;color:#dc2626;font-size:16px">←</div>
+                <span class="stat-badge badge-orange" id="pctSaidas">Hoje</span>
             </div>
             <div class="stat-label">Saídas Hoje</div>
             <div class="stat-value" id="saidasHoje">—</div>
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-icon" style="background:#E8FFF5; color:#16a34a">👥</div>
+                <div class="stat-icon" style="background:#ecfdf5;color:#16a34a;font-size:16px">◎</div>
                 <span class="stat-badge badge-green">Atual</span>
             </div>
             <div class="stat-label">Presentes Agora</div>
@@ -66,8 +69,8 @@
         </div>
         <div class="stat-card">
             <div class="stat-top">
-                <div class="stat-icon" style="background:#FFF3E0; color:#d97706">📋</div>
-                <span class="stat-badge badge-orange">Total</span>
+                <div class="stat-icon" style="background:#fff7ed;color:#c2410c;font-size:16px">≡</div>
+                <span class="stat-badge badge-blue">Total</span>
             </div>
             <div class="stat-label">Cadastrados</div>
             <div class="stat-value" id="cadastrados">—</div>
@@ -75,20 +78,18 @@
     </div>
 
     <div class="grid-2">
-        <!-- Gráfico -->
         <div class="card">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h3 style="font-weight:700">Frequência Semanal</h3>
+                    <h3 style="font-weight:700;font-size:15px">Frequência Semanal</h3>
                     <p class="text-muted">Últimos 7 dias</p>
                 </div>
             </div>
             <canvas id="grafico" height="200"></canvas>
         </div>
 
-        <!-- Atividade recente -->
         <div class="card">
-            <h3 style="font-weight:700; margin-bottom:16px">Atividade Recente</h3>
+            <h3 style="font-weight:700;margin-bottom:14px;font-size:15px">Atividade Recente</h3>
             <div id="atividadeList"></div>
         </div>
     </div>
@@ -109,10 +110,9 @@ async function carregarDashboard() {
     document.getElementById('presentes').textContent = data.presentes;
     document.getElementById('cadastrados').textContent = data.cadastrados;
 
-    // Gráfico
-    const labels = data.frequencia.map(f => f.dia);
+    const labels   = data.frequencia.map(f => f.dia);
     const entradas = data.frequencia.map(f => f.entradas);
-    const saidas = data.frequencia.map(f => f.saidas);
+    const saidas   = data.frequencia.map(f => f.saidas);
 
     if (chart) chart.destroy();
     chart = new Chart(document.getElementById('grafico'), {
@@ -120,34 +120,35 @@ async function carregarDashboard() {
         data: {
             labels,
             datasets: [
-                { label: 'Entradas', data: entradas, borderColor: '#4F35D2', backgroundColor: 'rgba(79,53,210,0.1)', tension: 0.4, fill: true, pointRadius: 4 },
-                { label: 'Saídas', data: saidas, borderColor: '#22D9A0', backgroundColor: 'rgba(34,217,160,0.08)', tension: 0.4, fill: true, pointRadius: 4 }
+                { label: 'Entradas', data: entradas, borderColor: '#0f6be4', backgroundColor: 'rgba(15,107,228,0.08)', tension: 0.4, fill: true, pointRadius: 4 },
+                { label: 'Saídas',   data: saidas,   borderColor: '#22D9A0', backgroundColor: 'rgba(34,217,160,0.07)', tension: 0.4, fill: true, pointRadius: 4 }
             ]
         },
         options: {
             plugins: { legend: { display: true } },
-            scales: { y: { beginAtZero: true, grid: { color: '#F0EDFF' } }, x: { grid: { display: false } } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                x: { grid: { display: false } }
+            },
             responsive: true
         }
     });
 
-    // Atividade
     const list = document.getElementById('atividadeList');
     list.innerHTML = data.atividade.map(r => {
-        const mins = Math.floor((Date.now() - new Date(r.horario.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1')).getTime()) / 60000);
-        var time = r.horario.split(' ')[1];
-        var time = time.split(':');
-        var format = time[0] + ':' + time[1] + 'h';
+        const partes = r.horario.split(' ');
+        const hora = partes[1] ? partes[1].substring(0,5) + 'h' : '';
+        const isEntrada = r.tipo === 'entrada';
         return `
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F0EDFF">
-            <span style="width:8px;height:8px;border-radius:50%;background:${r.tipo==='entrada'?'#22D9A0':'#FF6B6B'};flex-shrink:0"></span>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+            <span style="width:7px;height:7px;border-radius:50%;background:${isEntrada ? '#16a34a' : '#dc2626'};flex-shrink:0"></span>
             <div style="flex:1">
-                <div style="text-transform: capitalize;font-size:16px;font-weight: 600; color: ${r.tipo==='entrada' ? '#22D9A0' : '#FF6B6B'}">${r.pessoa_nome}</div>
-                <div style="font-size:12px;color:#6B6490"><small><strong>${r.tipo === 'entrada' ? 'Entrada registrada' : 'Saída registrada'}— ${r.pessoa_codigo}</strong></small></div>
+                <div style="font-size:13px;font-weight:600;text-transform:uppercase;color:${isEntrada ? '#16a34a' : '#dc2626'}">${r.pessoa_nome}</div>
+                <div style="font-size:11px;color:var(--text-muted)">${isEntrada ? 'Entrada' : 'Saída'} — ${r.pessoa_codigo}</div>
             </div>
-            <span style="font-size:11px;color:#6B6490; font: 800; font-style: italic"><small>${r.horario.split(' ')[0]}</small> - <strong>${format}</strong></span>
+            <span style="font-size:11px;color:var(--text-muted)">${partes[0]} <strong>${hora}</strong></span>
         </div>`;
-    }).join('') || '<p class="text-muted">Nenhum registro hoje.</p>';
+    }).join('') || '<p class="text-muted" style="padding:12px 0">Nenhum registro hoje.</p>';
 }
 
 function exportarCSV() {
@@ -155,8 +156,7 @@ function exportarCSV() {
     showToast('Dados exportados!', 'success');
 }
 
-const hoje = new Date().toISOString().split('T')[0];
-document.getElementById('dateFiltro').value = hoje;
+document.getElementById('dateFiltro').value = new Date().toISOString().split('T')[0];
 
 carregarDashboard();
 setInterval(carregarDashboard, 30000);
