@@ -54,12 +54,6 @@ db = SQLAlchemy(app)
 # ─── LÓGICA DE IDADE ──────────────────────────────────────────────────────────
 
 def calcular_tipo_por_idade(data_nascimento_str: str) -> str:
-    """
-    Determina o tipo da pessoa:
-      - Sem data → 'catequizando' (padrão seguro)
-      - < 18 anos → 'catequizando'
-      - >= 18 anos → 'adulto'
-    """
     if not data_nascimento_str:
         return 'catequizando'
     try:
@@ -76,7 +70,6 @@ def calcular_tipo_por_idade(data_nascimento_str: str) -> str:
 # ─── MODELS ───────────────────────────────────────────────────────────────────
 
 class CatequistaPatio(db.Model):
-    """Catequistas de pátio (auxiliares/monitores) — lista reutilizável."""
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False, unique=True)
     ativo = db.Column(db.Boolean, default=True)
@@ -99,6 +92,9 @@ class Pessoa(db.Model):
     catequista_patio_id = db.Column(db.Integer, db.ForeignKey('catequista_patio.id'), nullable=True)
     ativo = db.Column(db.Boolean, default=True)
     criado_em = db.Column(db.DateTime(timezone=True), default=agora_brasilia)
+    
+    # NOVO CAMPO: Foto
+    foto = db.Column(db.Text, nullable=True)
 
     catequista_patio = db.relationship('CatequistaPatio', backref='catequizandos', lazy=True)
 
@@ -115,7 +111,8 @@ class Pessoa(db.Model):
             'turma': self.turma,
             'catequista_patio_id': self.catequista_patio_id,
             'catequista_patio_nome': self.catequista_patio.nome if self.catequista_patio else None,
-            'ativo': self.ativo
+            'ativo': self.ativo,
+            'foto': self.foto  # Adicionado ao dicionário
         }
 
 
@@ -146,11 +143,9 @@ class Registro(db.Model):
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    # bcrypt hash armazenado como string (60 chars)
     password_hash = db.Column(db.String(200), nullable=False)
 
     def set_password(self, password: str):
-        """Hash com bcrypt via werkzeug (disponível via Flask)."""
         from werkzeug.security import generate_password_hash
         self.password_hash = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
 
@@ -161,19 +156,14 @@ class Admin(db.Model):
 
 with app.app_context():
     db.create_all()
-
     if not Admin.query.filter_by(username="admin").first():
         senha_inicial = os.getenv("ADMIN_INITIAL_PASSWORD")
         if not senha_inicial:
-            raise RuntimeError(
-                "Variável ADMIN_INITIAL_PASSWORD não definida. "
-                "Defina no Railway para criar o admin padrão com segurança."
-            )
+            raise RuntimeError("Variável ADMIN_INITIAL_PASSWORD não definida.")
         novo_admin = Admin(username="admin")
         novo_admin.set_password(senha_inicial)
         db.session.add(novo_admin)
         db.session.commit()
-        print("Admin padrão criado via ADMIN_INITIAL_PASSWORD.")
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -187,9 +177,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-
 def gerar_codigo(tipo='catequizando'):
-    """Gera código único: CA-YYYY-XXXXXXXX | AD-YYYY-XXXXXXXX | RS-YYYY-XXXXXXXX"""
     prefixos = {'catequizando': 'CA', 'adulto': 'AD', 'responsavel': 'RS'}
     prefixo = prefixos.get(tipo, 'CA')
     ano = datetime.now().year
@@ -200,15 +188,12 @@ def gerar_codigo(tipo='catequizando'):
         if not Pessoa.query.filter_by(codigo=codigo).first():
             return codigo
 
-
 def pode_registrar(codigo):
-    """Impede re-registro dentro de 30 segundos."""
     trinta_seg_atras = agora_brasilia() - timedelta(seconds=30)
     return Registro.query.filter(
         Registro.pessoa_codigo == codigo,
         Registro.horario > trinta_seg_atras
     ).first() is None
-
 
 def gerar_qr_base64(codigo):
     qr = qrcode.QRCode(version=1, box_size=8, border=4)
@@ -219,18 +204,14 @@ def gerar_qr_base64(codigo):
     img.save(buffer, format='PNG')
     return base64.b64encode(buffer.getvalue()).decode()
 
-
 def normalizar_nome(nome: str) -> str:
-    """Remove espaços extras e normaliza para comparação de duplicatas."""
     return re.sub(r'\s+', ' ', nome.strip()).upper()
-
 
 # ─── ROTAS PÚBLICAS ───────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
     return render_template('leitor.html')
-
 
 @app.route('/api/registrar', methods=['POST'])
 def registrar():
@@ -244,7 +225,6 @@ def registrar():
     if not codigo:
         return jsonify({'success': False, 'message': 'Código não informado.'}), 400
 
-    # Limita tamanho para evitar busca absurda
     if len(codigo) > 30:
         return jsonify({'success': False, 'message': 'Código inválido.'}), 400
 
@@ -258,7 +238,6 @@ def registrar():
     if not pode_registrar(codigo):
         return jsonify({'success': False, 'message': 'Aguarde 30 segundos para registrar novamente.'}), 429
 
-    # Catequizando com responsável exige QR do responsável na saída
     if tipo_registro == 'saida' and pessoa.tipo == 'catequizando' and pessoa.responsavel_codigo:
         if not tipo_extra:
             return jsonify({
@@ -307,12 +286,10 @@ def registrar():
         'message': f'{"Entrada" if tipo_registro == "entrada" else "Saída"} de {pessoa.nome} registrada!'
     })
 
-
 @app.route('/api/atividade_recente')
 def atividade_recente():
     registros = Registro.query.order_by(Registro.horario.desc()).limit(10).all()
     return jsonify([r.to_dict() for r in registros])
-
 
 # ─── ROTAS ADMIN ──────────────────────────────────────────────────────────────
 
@@ -325,7 +302,6 @@ def login():
         username = (data.get('username') or '').strip()
         password = data.get('password') or ''
 
-        # Limita tamanho para evitar abuse
         if len(username) > 80 or len(password) > 200:
             return jsonify({'success': False, 'message': 'Credenciais inválidas'}), 401
 
@@ -338,36 +314,30 @@ def login():
         return jsonify({'success': False, 'message': 'Credenciais inválidas'}), 401
     return render_template('login.html')
 
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
-
 
 @app.route('/admin')
 @login_required
 def dashboard():
     return render_template('dashboard.html')
 
-
 @app.route('/admin/pessoas')
 @login_required
 def pessoas():
     return render_template('pessoas.html')
-
 
 @app.route('/admin/cadastrar')
 @login_required
 def cadastrar():
     return render_template('cadastrar.html')
 
-
 @app.route('/admin/relatorios')
 @login_required
 def relatorios():
     return render_template('relatorios.html')
-
 
 # ─── API ADMIN ────────────────────────────────────────────────────────────────
 
@@ -378,14 +348,8 @@ def api_dashboard():
     inicio_hoje = datetime.combine(hoje, datetime.min.time()).replace(tzinfo=BRASILIA_TZ)
     fim_hoje = datetime.combine(hoje, datetime.max.time()).replace(tzinfo=BRASILIA_TZ)
 
-    entradas_hoje = Registro.query.filter(
-        Registro.tipo == 'entrada',
-        Registro.horario.between(inicio_hoje, fim_hoje)
-    ).count()
-    saidas_hoje = Registro.query.filter(
-        Registro.tipo == 'saida',
-        Registro.horario.between(inicio_hoje, fim_hoje)
-    ).count()
+    entradas_hoje = Registro.query.filter(Registro.tipo == 'entrada', Registro.horario.between(inicio_hoje, fim_hoje)).count()
+    saidas_hoje = Registro.query.filter(Registro.tipo == 'saida', Registro.horario.between(inicio_hoje, fim_hoje)).count()
     presentes = entradas_hoje - saidas_hoje
     cadastrados = Pessoa.query.filter_by(ativo=True).count()
 
@@ -408,7 +372,6 @@ def api_dashboard():
         'atividade': [r.to_dict() for r in atividade]
     })
 
-
 @app.route('/api/admin/pessoas', methods=['GET'])
 @login_required
 def api_pessoas():
@@ -418,11 +381,8 @@ def api_pessoas():
     if tipo in ('catequizando', 'adulto', 'responsavel'):
         query = query.filter_by(tipo=tipo)
     if q:
-        query = query.filter(
-            (Pessoa.nome.ilike(f'%{q}%')) | (Pessoa.codigo.ilike(f'%{q}%'))
-        )
+        query = query.filter((Pessoa.nome.ilike(f'%{q}%')) | (Pessoa.codigo.ilike(f'%{q}%')))
     return jsonify([p.to_dict() for p in query.order_by(Pessoa.nome).all()])
-
 
 @app.route('/api/admin/pessoas', methods=['POST'])
 @login_required
@@ -435,31 +395,15 @@ def api_cadastrar_pessoa():
     if not nome_raw:
         return jsonify({'success': False, 'message': 'Nome é obrigatório'}), 400
 
-    # Armazena em maiúsculas
     nome = normalizar_nome(nome_raw)
-
     tipo_base = data.get('tipo', 'catequizando')
-    if tipo_base not in ('catequizando', 'responsavel'):
-        return jsonify({'success': False, 'message': 'Tipo inválido'}), 400
-
-    # ── VALIDAÇÃO DE NOME DUPLICADO ────────────────────────────────────────────
-    duplicado = Pessoa.query.filter(
-        db.func.upper(Pessoa.nome) == nome,
-        Pessoa.ativo == True
-    ).first()
+    
+    duplicado = Pessoa.query.filter(db.func.upper(Pessoa.nome) == nome, Pessoa.ativo == True).first()
     if duplicado:
-        return jsonify({
-            'success': False,
-            'message': f'Já existe uma pessoa cadastrada com o nome "{nome}" (código: {duplicado.codigo}). '
-                       f'Verifique a lista antes de cadastrar novamente.'
-        }), 409
+        return jsonify({'success': False, 'message': f'Já existe uma pessoa cadastrada com o nome "{nome}".'}), 409
 
     data_nascimento = data.get('data_nascimento') or None
-
-    if tipo_base == 'catequizando':
-        tipo_final = calcular_tipo_por_idade(data_nascimento)
-    else:
-        tipo_final = 'responsavel'
+    tipo_final = calcular_tipo_por_idade(data_nascimento) if tipo_base == 'catequizando' else 'responsavel'
 
     try:
         catequista_id = int(data.get('catequista_patio_id')) if data.get('catequista_patio_id') else None
@@ -478,46 +422,42 @@ def api_cadastrar_pessoa():
         data_nascimento=data_nascimento,
         turma=(data.get('turma') or '')[:80] or None,
         catequista_patio_id=catequista_id if tipo_base == 'catequizando' else None,
+        foto=data.get('foto') or None # Adicionando a foto no cadastro
     )
     db.session.add(pessoa)
     db.session.commit()
     return jsonify({'success': True, 'pessoa': pessoa.to_dict(), 'codigo': codigo})
-
 
 @app.route('/api/admin/pessoas/<int:pessoa_id>', methods=['PUT'])
 @login_required
 def api_atualizar_pessoa(pessoa_id):
     pessoa = Pessoa.query.get_or_404(pessoa_id)
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
-
+    
     nome_raw = (data.get('nome') or '').strip()
     if not nome_raw:
         return jsonify({'success': False, 'message': 'Nome é obrigatório'}), 400
 
-    nome = normalizar_nome(nome_raw)
-    pessoa.nome = nome
+    pessoa.nome = normalizar_nome(nome_raw)
     pessoa.telefone = (data.get('telefone') or '')[:20] or None
     pessoa.email = (data.get('email') or '')[:120] or None
     pessoa.responsavel_codigo = data.get('responsavel_codigo') or None
     pessoa.turma = (data.get('turma') or '')[:80] or None
-
-    nova_dt_nasc = data.get('data_nascimento') or None
-    pessoa.data_nascimento = nova_dt_nasc
+    pessoa.data_nascimento = data.get('data_nascimento') or None
+    
+    if 'foto' in data:
+        pessoa.foto = data.get('foto')
 
     if pessoa.tipo in ('catequizando', 'adulto'):
-        pessoa.tipo = calcular_tipo_por_idade(nova_dt_nasc)
+        pessoa.tipo = calcular_tipo_por_idade(pessoa.data_nascimento)
 
     try:
-        catequista_id = int(data.get('catequista_patio_id')) if data.get('catequista_patio_id') else None
+        pessoa.catequista_patio_id = int(data.get('catequista_patio_id')) if data.get('catequista_patio_id') else None
     except (ValueError, TypeError):
-        catequista_id = None
-    pessoa.catequista_patio_id = catequista_id
+        pessoa.catequista_patio_id = None
 
     db.session.commit()
     return jsonify({'success': True, 'pessoa': pessoa.to_dict()})
-
 
 @app.route('/api/admin/pessoas/<int:pessoa_id>', methods=['DELETE'])
 @login_required
@@ -527,16 +467,13 @@ def api_deletar_pessoa(pessoa_id):
     db.session.commit()
     return jsonify({'success': True})
 
-
 @app.route('/api/admin/qrcode/<path:codigo>')
 @login_required
 def api_qrcode(codigo):
-    # Valida que o código existe e pertence a pessoa ativa
     pessoa = Pessoa.query.filter_by(codigo=codigo.upper(), ativo=True).first()
     if not pessoa:
         return jsonify({'error': 'Pessoa não encontrada'}), 404
     return jsonify({'qr': gerar_qr_base64(pessoa.codigo)})
-
 
 @app.route('/api/admin/relatorio/<path:codigo>')
 @login_required
@@ -567,43 +504,30 @@ def api_relatorio(codigo):
         'total_saidas': sum(1 for r in registros if r.tipo == 'saida')
     })
 
-
 @app.route('/api/admin/responsaveis')
 @login_required
 def api_responsaveis():
     resp = Pessoa.query.filter_by(tipo='responsavel', ativo=True).order_by(Pessoa.nome).all()
     return jsonify([{'codigo': p.codigo, 'nome': p.nome} for p in resp])
 
-
-# ─── API CATEQUISTAS DE PÁTIO ─────────────────────────────────────────────────
-
-@app.route('/api/admin/catequistas_patio', methods=['GET'])
+@app.route('/api/admin/catequistas_patio', methods=['GET', 'POST'])
 @login_required
-def api_listar_catequistas_patio():
+def api_catequistas_patio():
+    if request.method == 'POST':
+        data = request.get_json(silent=True)
+        nome = (data.get('nome') or '').strip()
+        if not nome:
+            return jsonify({'success': False, 'message': 'Informe o nome.'}), 400
+        existe = CatequistaPatio.query.filter(CatequistaPatio.nome.ilike(nome), CatequistaPatio.ativo == True).first()
+        if existe:
+            return jsonify({'success': False, 'message': 'Já existe um catequista com esse nome.'}), 409
+        c = CatequistaPatio(nome=nome)
+        db.session.add(c)
+        db.session.commit()
+        return jsonify({'success': True, 'catequista': c.to_dict()})
+        
     lista = CatequistaPatio.query.filter_by(ativo=True).order_by(CatequistaPatio.nome).all()
     return jsonify([c.to_dict() for c in lista])
-
-
-@app.route('/api/admin/catequistas_patio', methods=['POST'])
-@login_required
-def api_criar_catequista_patio():
-    data = request.get_json(silent=True)
-    if not data:
-        return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
-    nome = (data.get('nome') or '').strip()
-    if not nome:
-        return jsonify({'success': False, 'message': 'Informe o nome.'}), 400
-    existe = CatequistaPatio.query.filter(
-        CatequistaPatio.nome.ilike(nome),
-        CatequistaPatio.ativo == True
-    ).first()
-    if existe:
-        return jsonify({'success': False, 'message': 'Já existe um catequista com esse nome.'}), 409
-    c = CatequistaPatio(nome=nome)
-    db.session.add(c)
-    db.session.commit()
-    return jsonify({'success': True, 'catequista': c.to_dict()})
-
 
 @app.route('/api/admin/catequistas_patio/<int:cid>', methods=['DELETE'])
 @login_required
@@ -613,40 +537,28 @@ def api_deletar_catequista_patio(cid):
     db.session.commit()
     return jsonify({'success': True})
 
-
-# ─── TROCA DE SENHA (via painel admin) ────────────────────────────────────────
-
 @app.route('/api/admin/trocar_senha', methods=['POST'])
 @login_required
 def api_trocar_senha():
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({'success': False, 'message': 'Dados inválidos'}), 400
-
     senha_atual = data.get('senha_atual') or ''
     nova_senha = data.get('nova_senha') or ''
     confirmar = data.get('confirmar') or ''
 
     if not senha_atual or not nova_senha or not confirmar:
         return jsonify({'success': False, 'message': 'Preencha todos os campos.'}), 400
-
     if nova_senha != confirmar:
         return jsonify({'success': False, 'message': 'Nova senha e confirmação não coincidem.'}), 400
-
     if len(nova_senha) < 8:
         return jsonify({'success': False, 'message': 'A nova senha deve ter pelo menos 8 caracteres.'}), 400
 
-    username = session.get('admin_username')
-    admin = Admin.query.filter_by(username=username).first()
+    admin = Admin.query.filter_by(username=session.get('admin_username')).first()
     if not admin or not admin.check_password(senha_atual):
         return jsonify({'success': False, 'message': 'Senha atual incorreta.'}), 401
 
     admin.set_password(nova_senha)
     db.session.commit()
     return jsonify({'success': True, 'message': 'Senha alterada com sucesso!'})
-
-
-# ─── INIT ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     with app.app_context():

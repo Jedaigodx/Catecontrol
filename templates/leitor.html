@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <style>
         :root {
             --primary: #0f6be4;
@@ -31,65 +30,25 @@
         }
 
         .header {
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
+            width: 100%; max-width: 480px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
         }
-
         .brand { display: flex; align-items: center; gap: 10px; }
-
-        .brand .brand-icon {
-            width: 38px; height: 38px;
-            background: var(--primary);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
-        }
-
+        .brand .brand-icon { width: 38px; height: 38px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white;}
         .brand h1 { font-size: 18px; color: var(--primary-dark); font-weight: 700; letter-spacing: 0.5px; }
         .brand p  { font-size: 11px; color: #64748b; }
 
-        .admin-link {
-            padding: 9px 14px;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 700;
-            border-radius: 8px;
-            transition: background 0.15s;
-            letter-spacing: 0.3px;
-        }
+        .admin-link { padding: 9px 14px; background: var(--primary); color: white; text-decoration: none; font-size: 12px; font-weight: 700; border-radius: 8px; transition: background 0.15s; letter-spacing: 0.3px; }
         .admin-link:hover { background: var(--primary-dark); }
 
-        .reader-container {
-            width: 100%;
-            max-width: 460px;
-        }
+        .reader-container { width: 100%; max-width: 460px; }
 
-        /* Result card */
-        .result-card {
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
-            display: none;
-            margin-bottom: 14px;
-            color: white;
-        }
-
+        .result-card { border-radius: 16px; padding: 24px; text-align: center; animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1); display: none; margin-bottom: 14px; color: white; }
         .result-card.entrada { background: var(--accent); }
         .result-card.saida   { background: var(--accent-red); }
         .result-card.error   { background: var(--accent-yellow); color: white; }
         .result-card.espera  { background: #1e40af; }
 
-        @keyframes popIn {
-            from { transform: scale(0.88); opacity: 0; }
-            to   { transform: scale(1); opacity: 1; }
-        }
+        @keyframes popIn { from { transform: scale(0.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         .result-icon  { font-size: 40px; margin-bottom: 8px; }
         .result-tipo  { font-size: 13px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.85; text-transform: uppercase; }
@@ -98,150 +57,35 @@
         .result-horario{ font-size: 26px; font-weight: 700; font-family: 'Courier New', monospace; }
         .result-msg   { font-size: 12px; opacity: 0.7; margin-top: 6px; }
 
-        /* Responsável pending */
-        .resp-pending {
-            background: white;
-            border: 2px solid var(--primary);
-            border-radius: 16px;
-            padding: 22px;
-            text-align: center;
-            display: none;
-            margin-bottom: 14px;
-        }
-
+        .resp-pending { background: white; border: 2px solid var(--primary); border-radius: 16px; padding: 22px; text-align: center; display: none; margin-bottom: 14px; }
         .resp-pending h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--primary-dark); }
         .resp-pending p  { font-size: 13px; color: #64748b; margin-bottom: 12px; }
         .resp-pending .resp-nome { font-size: 17px; font-weight: 700; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; }
 
-        .cancel-btn {
-            padding: 7px 18px;
-            background: #f1f5f9;
-            color: #475569;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 8px;
-            font-family: 'Josefin Sans', sans-serif;
-            font-size: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.15s;
-        }
-        .cancel-btn:hover { background: #e2e8f0; }
+        .cancel-btn { padding: 7px 18px; background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; border-radius: 8px; font-family: 'Josefin Sans', sans-serif; font-size: 12px; cursor: pointer; font-weight: 600; transition: background 0.15s; }
 
-        /* Scanner / input */
-        .scanner-wrap {
-            background: white;
-            border-radius: 14px;
-            padding: 20px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 8px rgba(15,23,42,0.07);
-            margin-bottom: 14px;
-        }
+        .scanner-wrap { background: white; border-radius: 14px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 1px 8px rgba(15,23,42,0.07); margin-bottom: 14px; }
+        .scanner-title { text-align: center; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 14px; letter-spacing: 0.3px; }
 
-        .scanner-title {
-            text-align: center;
-            font-size: 14px;
-            font-weight: 600;
-            color: #475569;
-            margin-bottom: 14px;
-            letter-spacing: 0.3px;
-        }
+        .manual-input { display: flex; margin-top: 14px; border-radius: 8px; overflow: hidden; border: 1.5px solid #e2e8f0; }
+        .manual-input input { flex: 1; padding: 11px 13px; font-family: 'Josefin Sans', sans-serif; font-size: 13px; border: none; outline: none; background: #f8fafc; color: #1e293b; }
+        .manual-input button { padding: 11px 16px; background: var(--primary); color: white; border: none; font-family: 'Josefin Sans', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+        
+        .foto-container { width: 180px; height: 180px; margin: 0 auto 14px; border-radius: 12px; overflow: hidden; background: #f1f5f9; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; }
+        .foto-container img { width: 100%; height: 100%; object-fit: cover; }
 
-        #qr-reader { border-radius: 10px; overflow: hidden; }
-        #qr-reader video { border-radius: 10px !important; }
-
-        .manual-input {
-            display: flex;
-            margin-top: 14px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1.5px solid #e2e8f0;
-        }
-
-        .manual-input input {
-            flex: 1;
-            padding: 11px 13px;
-            font-family: 'Josefin Sans', sans-serif;
-            font-size: 13px;
-            border: none;
-            outline: none;
-            background: #f8fafc;
-            color: #1e293b;
-        }
-
-        .manual-input button {
-            padding: 11px 16px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            font-family: 'Josefin Sans', sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.15s;
-            white-space: nowrap;
-        }
-        .manual-input button:hover { background: var(--primary-dark); }
-
-        /* Atividade recente */
-        .atividade {
-            background: white;
-            border-radius: 14px;
-            padding: 18px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 8px rgba(15,23,42,0.06);
-        }
-
-        .atividade h3 {
-            font-size: 13px;
-            font-weight: 700;
-            color: #475569;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .ativ-item {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 7px 0;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 13px;
-        }
-
+        .atividade { background: white; border-radius: 14px; padding: 18px; border: 1px solid #e2e8f0; box-shadow: 0 1px 8px rgba(15,23,42,0.06); }
+        .atividade h3 { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .ativ-item { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
         .ativ-item:last-child { border-bottom: none; }
-
-        .ativ-dot {
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
+        .ativ-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
         .dot-entrada { background: var(--accent); }
         .dot-saida   { background: var(--accent-red); }
-
-        .ativ-nome {
-            flex: 1;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-        }
-
+        .ativ-nome { flex: 1; font-weight: 600; font-size: 12px; text-transform: uppercase; }
         .nome-entrada { color: var(--accent); }
         .nome-saida   { color: var(--accent-red); }
-
-        .ativ-tipo {
-            font-size: 11px;
-            color: #94a3b8;
-            text-transform: capitalize;
-        }
-
-        .ativ-time {
-            font-size: 11px;
-            color: #64748b;
-            font-weight: 700;
-            font-family: 'Courier New', monospace;
-        }
+        .ativ-tipo { font-size: 11px; color: #94a3b8; text-transform: capitalize; }
+        .ativ-time { font-size: 11px; color: #64748b; font-weight: 700; font-family: 'Courier New', monospace; }
     </style>
 </head>
 <body>
@@ -259,7 +103,22 @@
 
     <div class="reader-container">
 
-        <!-- Resultado normal -->
+        <!-- Scanner / Leitor USB -->
+        <div class="scanner-wrap">
+            <div class="scanner-title">Aguardando leitura do leitor USB...</div>
+            
+            <!-- Foto da pessoa em destaque -->
+            <div class="foto-container" id="fotoContainer">
+                <span style="color: #94a3b8; font-size: 13px;" id="fotoMsg">Aguardando...</span>
+            </div>
+
+            <div class="manual-input">
+                <input type="text" id="manualCode" placeholder="Passe o código no leitor..." autofocus
+                    onkeypress="if(event.key==='Enter') registrarManual()">
+                <button onclick="registrarManual()">Registrar</button>
+            </div>
+        </div>
+
         <div class="result-card" id="resultCard">
             <div class="result-icon" id="resultIcon"></div>
             <div class="result-tipo" id="resultTipo"></div>
@@ -269,7 +128,6 @@
             <div class="result-msg" id="resultMsg"></div>
         </div>
 
-        <!-- Aguardando responsável -->
         <div class="resp-pending" id="respPending">
             <div style="font-size:28px;margin-bottom:10px">&#x1F46A;</div>
             <h3>Autorização de Saída</h3>
@@ -278,54 +136,22 @@
             <button class="cancel-btn" onclick="cancelarResposta()">Cancelar</button>
         </div>
 
-        <!-- Scanner -->
-        <div class="scanner-wrap">
-            <div class="scanner-title">Aproxime o QR Code no leitor</div>
-            <div id="qr-reader"></div>
-            <div class="manual-input">
-                <input type="text" id="manualCode" placeholder="Ou digite o código manualmente..."
-                    onkeypress="if(event.key==='Enter') registrarManual()">
-                <button onclick="registrarManual()">Registrar</button>
-            </div>
-        </div>
-
-        <!-- Atividade -->
         <div class="atividade">
             <h3>Atividade Recente</h3>
             <div id="atividadeList"></div>
         </div>
-
     </div>
 
     <script>
         let aguardandoResponsavel = null;
         let processando = false;
-        let lastCode = '';
-        let lastTime = 0;
 
-        const html5QrCode = new Html5Qrcode("qr-reader");
-
-        html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 5, qrbox: { width: 240, height: 240 } },
-            onScanSuccess
-        ).catch(err => {
-            console.log("Câmera não disponível:", err);
-        });
-
-        function onScanSuccess(decodedText) {
-            const now = Date.now();
-            // Throttle UI de 3 segundos para não repetir a mesma leitura acidentalmente
-            if (decodedText === lastCode && now - lastTime < 3000) return;
-            lastCode = decodedText;
-            lastTime = now;
-
-            if (aguardandoResponsavel) {
-                registrar(aguardandoResponsavel, decodedText);
-            } else {
-                registrar(decodedText);
+        // Mantém o foco no input do leitor USB para evitar perdas
+        document.addEventListener('click', (e) => {
+            if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && e.target.tagName !== 'INPUT') {
+                document.getElementById('manualCode').focus();
             }
-        }
+        });
 
         async function registrar(codigo, codigoResponsavel = null) {
             if (processando) return;
@@ -341,6 +167,16 @@
                     body: JSON.stringify(body)
                 });
                 const data = await res.json();
+                
+                // Tratar a foto
+                const fotoContainer = document.getElementById('fotoContainer');
+                if (data.pessoa && data.pessoa.foto) {
+                    fotoContainer.innerHTML = `<img src="${data.pessoa.foto}">`;
+                    fotoContainer.style.border = "none";
+                } else {
+                    fotoContainer.innerHTML = `<span style="color: #94a3b8; font-size: 13px;">Sem foto</span>`;
+                    fotoContainer.style.border = "2px dashed #cbd5e1";
+                }
 
                 if (data.requer_responsavel) {
                     aguardandoResponsavel = codigo;
@@ -360,7 +196,6 @@
                 card.style.display = 'block';
 
                 if (data.success) {
-                    const icones = { entrada: '✓', saida: '←' };
                     document.getElementById('resultIcon').textContent = data.tipo === 'entrada' ? '✓' : '←';
                     document.getElementById('resultTipo').textContent = data.tipo === 'entrada' ? 'ENTRADA REGISTRADA' : 'SAÍDA REGISTRADA';
                     document.getElementById('resultNome').textContent = data.pessoa.nome;
@@ -379,6 +214,9 @@
                 setTimeout(() => {
                     card.style.display = 'none';
                     processando = false;
+                    // Volta o placeholder da foto
+                    fotoContainer.innerHTML = `<span style="color: #94a3b8; font-size: 13px;">Aguardando...</span>`;
+                    fotoContainer.style.border = "2px dashed #cbd5e1";
                 }, 4000);
 
                 carregarAtividade();
@@ -389,20 +227,23 @@
         }
 
         function registrarManual() {
-            const code = document.getElementById('manualCode').value.trim();
+            const input = document.getElementById('manualCode');
+            const code = input.value.trim();
             if (!code) return;
             if (aguardandoResponsavel) {
                 registrar(aguardandoResponsavel, code);
             } else {
                 registrar(code);
             }
-            document.getElementById('manualCode').value = '';
+            input.value = '';
+            input.focus();
         }
 
         function cancelarResposta() {
             aguardandoResponsavel = null;
             document.getElementById('respPending').style.display = 'none';
             processando = false;
+            document.getElementById('manualCode').focus();
         }
 
         async function carregarAtividade() {
@@ -417,7 +258,7 @@
                         <span class="ativ-time">${r.horario.split(' ')[1].substring(0,5)}</span>
                     </div>
                 `).join('') || '<p style="font-size:13px;color:#94a3b8;padding:8px 0">Nenhum registro ainda.</p>';
-            } catch(e) { console.error('Erro ao carregar atividade:', e); }
+            } catch(e) {}
         }
 
         carregarAtividade();

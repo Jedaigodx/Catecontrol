@@ -17,66 +17,25 @@
         <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">≡</span> Relatórios</a>
         <a class="nav-item" href="/"><span class="nav-icon">◎</span> Leitor QR</a>
     </nav>
-    <div class="sidebar-footer">
-        <div class="admin-info">
-            <div class="admin-avatar">A</div>
-            <div>
-                <span class="admin-name">Admin</span>
-                <small class="admin-role">Administrador</small>
-            </div>
-            <button class="logout-btn" onclick="window.location='/logout'" title="Sair">⏻</button>
-        </div>
-    </div>
 </div>
 
 <div class="main-content">
     <div class="page-header flex items-center justify-between">
-        <div>
-            <h2>PESSOAS CADASTRADAS</h2>
-            <p>Gerencie catequizandos e responsáveis</p>
-        </div>
-        <a href="/admin/cadastrar" class="btn btn-primary" style="text-decoration:none">+ Novo Cadastro</a>
+        <div><h2>PESSOAS CADASTRADAS</h2></div>
+        <a href="/admin/cadastrar" class="btn btn-primary">+ Novo Cadastro</a>
     </div>
 
     <div class="card">
-        <div class="flex items-center justify-between mb-4" style="flex-wrap:wrap;gap:10px">
-            <div class="search-bar" style="flex:1;max-width:360px">
-                <span class="search-icon">⌕</span>
-                <input type="text" placeholder="Buscar por nome ou código..." id="search" oninput="buscar()">
-            </div>
-            <div class="flex gap-2">
-                <select id="filtroTipo" onchange="buscar()"
-                    style="padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Josefin Sans',sans-serif;font-size:13px;outline:none;cursor:pointer;background:white;color:var(--text)">
-                    <option value="">Todos os tipos</option>
-                    <option value="catequizando">Catequizando</option>
-                    <option value="adulto">Adulto</option>
-                    <option value="responsavel">Responsável</option>
-                </select>
-            </div>
-        </div>
-
         <div class="table-wrap">
             <table id="tabelaPessoas">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Nome</th>
-                        <th>Tipo</th>
-                        <th>Turma</th>
-                        <th>Catequista</th>
-                        <th>Telefone</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyPessoas">
-                    <tr><td colspan="7" class="empty-state">Carregando...</td></tr>
-                </tbody>
+                <thead><tr><th>Foto</th><th>Código</th><th>Nome</th><th>Tipo</th><th>Ações</th></tr></thead>
+                <tbody id="tbodyPessoas"></tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- ── Modal Editar ── -->
+<!-- Modal Editar -->
 <div class="modal-overlay" id="modalEditar">
     <div class="modal" style="width:540px">
         <div class="modal-header">
@@ -86,55 +45,28 @@
         <input type="hidden" id="editId">
         <input type="hidden" id="editTipo">
 
+        <div class="form-group" style="display:flex; gap:15px; align-items:center; margin-bottom: 20px">
+            <img id="editFotoPreview" style="width:70px; height:70px; border-radius:50%; object-fit:cover; background:#f1f5f9;">
+            <div>
+                <label for="editFoto" class="btn btn-sm btn-outline" style="cursor:pointer; display:inline-block">Alterar Foto</label>
+                <input type="file" id="editFoto" accept="image/*" style="display:none" onchange="alterarFotoEdit(event)">
+                <button class="btn btn-sm btn-danger" onclick="removerFotoEdit()">Excluir Foto</button>
+            </div>
+        </div>
+
         <div class="form-row">
             <div class="form-group"><label>Nome Completo</label><input type="text" id="editNome" style="text-transform:uppercase"></div>
-            <div class="form-group"><label>Telefone</label><input type="text" id="editTelefone"></div>
-        </div>
-        <div class="form-row">
-            <div class="form-group"><label>E-mail</label><input type="email" id="editEmail"></div>
-            <div class="form-group"><label>Data de Nascimento</label><input type="date" id="editDtNasc"></div>
+            <div class="form-group"><label>Data Nascimento</label><input type="date" id="editDtNasc"></div>
         </div>
 
         <div id="groupCrianca" style="display:none">
-            <div class="form-group">
-                <label>Turma</label>
-                <input type="text" id="editTurma" placeholder="Ex: 1º Ano, Crisma...">
-            </div>
-            <div class="form-group">
-                <label>Responsável Vinculado</label>
-                <select id="editResponsavel" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Josefin Sans',sans-serif;font-size:13px;outline:none">
-                    <option value="">— Nenhum —</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Catequista Responsável</label>
-                <select id="editCatequistaPatio" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Josefin Sans',sans-serif;font-size:13px;outline:none">
-                    <option value="">— Nenhum —</option>
-                </select>
-            </div>
+            <div class="form-group"><label>Turma</label><input type="text" id="editTurma"></div>
+            <div class="form-group"><label>Responsável</label><select id="editResponsavel"></select></div>
         </div>
 
         <div class="flex gap-2" style="margin-top:10px">
             <button class="btn btn-primary" style="flex:1" onclick="salvarEdicao()">Salvar Alterações</button>
-            <button class="btn btn-outline" onclick="fecharModal()">Cancelar</button>
         </div>
-    </div>
-</div>
-
-<!-- ── Modal QR Code ── -->
-<div class="modal-overlay" id="modalQR">
-    <div class="modal" style="text-align:center;max-width:340px">
-        <div class="modal-header">
-            <h3>QR CODE</h3>
-            <button class="modal-close" onclick="fecharModalQR()">✕</button>
-        </div>
-        <div style="border:1.5px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
-            <p id="qrNome" style="font-weight:700;font-size:16px;text-transform:uppercase;margin-bottom:3px"></p>
-            <p id="qrCodigo" class="mono" style="margin-bottom:3px;color:var(--text-muted);font-size:12px"></p>
-            <p id="qrTurma" style="font-size:12px;color:var(--primary);margin-bottom:12px;font-weight:600"></p>
-            <img id="qrImg" style="max-width:220px;border-radius:8px">
-        </div>
-        <button class="btn btn-primary" style="width:100%" onclick="imprimirQR()">Imprimir Crachá</button>
     </div>
 </div>
 {% endblock %}
@@ -143,273 +75,103 @@
 <script>
 let todasPessoas = [];
 let responsaveis = [];
-let catequistasPatio = [];
+let fotoAtualEdit = null;
+let fotoModificada = false;
 
 async function carregarDados() {
-    [todasPessoas, responsaveis, catequistasPatio] = await Promise.all([
-        api('/api/admin/pessoas'),
-        api('/api/admin/responsaveis'),
-        api('/api/admin/catequistas_patio')
-    ]);
+    todasPessoas = await api('/api/admin/pessoas');
+    responsaveis = await api('/api/admin/responsaveis');
     renderizar(todasPessoas);
-}
-
-function tipoLabel(tipo) {
-    return { catequizando: 'Catequizando', adulto: 'Adulto', responsavel: 'Responsável' }[tipo] || tipo;
 }
 
 function renderizar(pessoas) {
     const tbody = document.getElementById('tbodyPessoas');
-
-    if (!pessoas.length) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>Nenhuma pessoa encontrada</p></div></td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = pessoas.map(p => {
-        const turmaLabel = p.turma
-            ? `<span style="background:#eff6ff;color:#1d4ed8;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">${p.turma}</span>`
-            : '<span style="color:var(--text-muted)">—</span>';
-
-        const catLabel = p.catequista_patio_nome
-            ? `<span style="background:#ecfdf5;color:#16a34a;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">${p.catequista_patio_nome}</span>`
-            : '<span style="color:var(--text-muted)">—</span>';
-
-        return `<tr>
-            <td><span class="mono" style="font-weight:700;color:var(--primary);font-size:12px">${p.codigo}</span></td>
-            <td>
-                <strong style="text-transform:uppercase;font-size:13px">${p.nome}</strong>
-                ${p.email ? `<br><small style="color:var(--text-muted);font-size:11px">${p.email}</small>` : ''}
-            </td>
-            <td><span class="badge badge-${p.tipo}">${tipoLabel(p.tipo)}</span></td>
-            <td>${p.tipo !== 'responsavel' ? turmaLabel : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
-            <td>${p.tipo !== 'responsavel' ? catLabel : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
-            <td style="font-size:13px">${p.telefone || '—'}</td>
-            <td>
-                <div class="flex gap-2">
-                    <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome}','${(p.turma||'').replace(/'/g,"\\'")}')">QR</button>
-                    <button class="btn btn-sm btn-primary" onclick='abrirEditar(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome.replace(/'/g,"\\'")}')">Remover</button>
-                </div>
-            </td>
-        </tr>`;
-    }).join('');
-}
-
-function buscar() {
-    const q = document.getElementById('search').value.toLowerCase();
-    const tipo = document.getElementById('filtroTipo').value;
-    const filtradas = todasPessoas.filter(p => {
-        const matchQ = !q || p.nome.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q);
-        const matchT = !tipo || p.tipo === tipo;
-        return matchQ && matchT;
-    });
-    renderizar(filtradas);
+    tbody.innerHTML = pessoas.map(p => `<tr>
+        <td>
+            <img src="${p.foto || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='}" 
+                 style="width:35px;height:35px;border-radius:50%;object-fit:cover;background:#e2e8f0; ${!p.foto ? 'opacity:0' : ''}">
+        </td>
+        <td><span class="mono">${p.codigo}</span></td>
+        <td><strong>${p.nome}</strong></td>
+        <td><span class="badge badge-${p.tipo}">${p.tipo}</span></td>
+        <td>
+            <button class="btn btn-sm btn-primary" onclick='abrirEditar(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="deletar(${p.id})">Remover</button>
+        </td>
+    </tr>`).join('');
 }
 
 function abrirEditar(p) {
     document.getElementById('editId').value = p.id;
     document.getElementById('editTipo').value = p.tipo;
     document.getElementById('editNome').value = p.nome;
-    document.getElementById('editTelefone').value = p.telefone || '';
-    document.getElementById('editEmail').value = p.email || '';
     document.getElementById('editDtNasc').value = p.data_nascimento || '';
-
-    const grupoExtra = document.getElementById('groupCrianca');
+    
+    fotoAtualEdit = p.foto || null;
+    fotoModificada = false;
+    document.getElementById('editFotoPreview').src = fotoAtualEdit || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+    
     if (p.tipo === 'catequizando' || p.tipo === 'adulto') {
-        grupoExtra.style.display = 'block';
+        document.getElementById('groupCrianca').style.display = 'block';
         document.getElementById('editTurma').value = p.turma || '';
-
-        const selResp = document.getElementById('editResponsavel');
-        selResp.innerHTML = '<option value="">— Nenhum —</option>' +
-            responsaveis.map(r => `<option value="${r.codigo}" ${r.codigo === p.responsavel_codigo ? 'selected' : ''}>${r.nome} (${r.codigo})</option>`).join('');
-
-        const selCat = document.getElementById('editCatequistaPatio');
-        selCat.innerHTML = '<option value="">— Nenhum —</option>' +
-            catequistasPatio.map(c => `<option value="${c.id}" ${c.id === p.catequista_patio_id ? 'selected' : ''}>${c.nome}</option>`).join('');
+        document.getElementById('editResponsavel').innerHTML = '<option value="">— Nenhum —</option>' +
+            responsaveis.map(r => `<option value="${r.codigo}" ${r.codigo === p.responsavel_codigo ? 'selected' : ''}>${r.nome}</option>`).join('');
     } else {
-        grupoExtra.style.display = 'none';
+        document.getElementById('groupCrianca').style.display = 'none';
     }
-
     document.getElementById('modalEditar').classList.add('open');
+}
+
+function alterarFotoEdit(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX = 300;
+            canvas.width = MAX; canvas.height = img.height * (MAX/img.width);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            fotoAtualEdit = canvas.toDataURL('image/jpeg', 0.8);
+            document.getElementById('editFotoPreview').src = fotoAtualEdit;
+            fotoModificada = true;
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removerFotoEdit() {
+    fotoAtualEdit = null;
+    fotoModificada = true;
+    document.getElementById('editFotoPreview').src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 }
 
 function fecharModal() { document.getElementById('modalEditar').classList.remove('open'); }
 
 async function salvarEdicao() {
-    const id = document.getElementById('editId').value;
-    const tipo = document.getElementById('editTipo').value;
-
     const body = {
-        nome: document.getElementById('editNome').value.trim(),
-        telefone: document.getElementById('editTelefone').value,
-        email: document.getElementById('editEmail').value,
-        data_nascimento: document.getElementById('editDtNasc').value,
+        nome: document.getElementById('editNome').value,
+        data_nascimento: document.getElementById('editDtNasc').value
     };
-
-    if (!body.nome) { showToast('Nome é obrigatório.', 'error'); return; }
-
-    if (tipo === 'catequizando' || tipo === 'adulto') {
-        body.turma = document.getElementById('editTurma').value.trim();
-        body.responsavel_codigo = document.getElementById('editResponsavel').value || null;
-        const catId = document.getElementById('editCatequistaPatio').value;
-        body.catequista_patio_id = catId ? parseInt(catId) : null;
-    } else {
-        body.turma = null;
-        body.responsavel_codigo = null;
-        body.catequista_patio_id = null;
+    
+    if (fotoModificada) body.foto = fotoAtualEdit;
+    if (document.getElementById('editTipo').value !== 'responsavel') {
+        body.turma = document.getElementById('editTurma').value;
+        body.responsavel_codigo = document.getElementById('editResponsavel').value;
     }
 
-    const res = await api(`/api/admin/pessoas/${id}`, { method: 'PUT', body: JSON.stringify(body) });
-    if (res && res.success !== false) {
-        showToast('Dados atualizados!', 'success');
-        fecharModal();
-        carregarDados();
-    } else {
-        showToast(res?.message || 'Erro ao salvar.', 'error');
-    }
-}
-
-async function deletar(id, nome) {
-    if (!confirm(`Desativar "${nome}"? Esta pessoa não poderá mais usar o sistema.`)) return;
-    await api(`/api/admin/pessoas/${id}`, { method: 'DELETE' });
-    showToast(`${nome} desativado(a).`, 'info');
+    await api(`/api/admin/pessoas/${document.getElementById('editId').value}`, { method: 'PUT', body: JSON.stringify(body) });
+    fecharModal();
     carregarDados();
+    showToast('Dados atualizados!', 'success');
 }
 
-async function abrirQR(codigo, nome, turma) {
-    document.getElementById('qrNome').textContent = nome;
-    document.getElementById('qrCodigo').textContent = codigo;
-    document.getElementById('qrTurma').textContent = turma ? `Turma: ${turma}` : '';
-    document.getElementById('modalQR').classList.add('open');
-    const data = await api(`/api/admin/qrcode/${codigo}`);
-    document.getElementById('qrImg').src = 'data:image/png;base64,' + data.qr;
-}
-
-function fecharModalQR() { document.getElementById('modalQR').classList.remove('open'); }
-
-/**
- * Imprime o crachá.
- * - nome em maiúsculas
- * - sem campo de tipo (adulto/criança/responsável)
- * - turma exibida se houver
- */
-function imprimirQR() {
-    const nome   = document.getElementById('qrNome').textContent;
-    const codigo = document.getElementById('qrCodigo').textContent;
-    const turma  = document.getElementById('qrTurma').textContent.replace('Turma: ', '').trim();
-    const src    = document.getElementById('qrImg').src;
-
-    const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Crachá - CateControl</title>
-    <style>
-        @page { size: 54mm 86mm; margin: 0; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            width: 54mm; height: 86mm;
-            display: flex; align-items: center; justify-content: center;
-            background: white;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .card {
-            width: 54mm; height: 86mm;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1.5px solid #4F35D2;
-            border-radius: 6px;
-        }
-
-        .top {
-            background: linear-gradient(135deg, #0f6be4, #4F35D2);
-            padding: 7px 6px;
-            text-align: center;
-            color: white;
-        }
-
-        .top h1 {
-            font-size: 6.5pt;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-        }
-
-        .content {
-            flex: 1;
-            padding: 6px 4px 4px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .qr img {
-            width: 40mm; height: 40mm;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .codigo {
-            font-family: 'Courier New', monospace;
-            font-size: 7pt;
-            color: #555;
-            margin-bottom: 3px;
-            letter-spacing: 0.4px;
-        }
-
-        .nome {
-            font-size: 9.5pt;
-            font-weight: 700;
-            color: #111;
-            line-height: 1.15;
-            word-break: break-word;
-            text-transform: uppercase;
-        }
-
-        .turma {
-            font-size: 7.5pt;
-            margin-top: 3px;
-            color: #0f6be4;
-            font-weight: 600;
-            word-break: break-word;
-        }
-
-        .footer {
-            font-size: 5.5pt;
-            color: #888;
-            text-align: center;
-            padding: 5px 4px;
-            border-top: 1px solid #eee;
-            line-height: 1.4;
-        }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <div class="top">
-            <h1>Paróquia Sagrado Coração de Jesus</h1>
-        </div>
-        <div class="content">
-            <div class="qr"><img src="${src}"></div>
-            <div class="codigo">${codigo}</div>
-            <div class="nome">${nome}</div>
-            ${turma ? `<div class="turma">${turma}</div>` : ''}
-        </div>
-        <div class="footer">
-            Apresente no leitor para registrar<br>entrada e saída
-        </div>
-    </div>
-    <script>window.onload = function() { window.print(); }<\/script>
-</body>
-</html>`);
-    win.document.close();
+async function deletar(id) {
+    if(!confirm('Desativar pessoa?')) return;
+    await api(`/api/admin/pessoas/${id}`, { method: 'DELETE' });
+    carregarDados();
 }
 
 carregarDados();
