@@ -48,7 +48,7 @@
                 <select id="filtroTipo" onchange="buscar()"
                     style="padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Josefin Sans',sans-serif;font-size:13px;outline:none;cursor:pointer;background:white;color:var(--text)">
                     <option value="">Todos os tipos</option>
-                    <option value="catequizando">Catequizando / Aluno</option>
+                    <option value="criança / Adolescente">Catequizando / Aluno</option>
                     <option value="adulto">Adulto</option>
                     <option value="responsavel">Responsável</option>
                 </select>
@@ -167,7 +167,7 @@ async function carregarDados() {
 }
 
 function tipoLabel(tipo) {
-    return { catequizando: 'Catequizando', adulto: 'Adulto', responsavel: 'Responsável' }[tipo] || tipo;
+    return { catequizando: 'criança / Adolescente', adulto: 'Adulto', responsavel: 'Responsável' }[tipo] || tipo;
 }
 
 function renderizar(pessoas) {
@@ -235,7 +235,7 @@ function abrirEditar(p) {
     document.getElementById('editFotoPreview').src = fotoAtualEdit || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 
     const grupoExtra = document.getElementById('groupCrianca');
-    if (p.tipo === 'catequizando' || p.tipo === 'adulto') {
+    if (p.tipo === 'criança / Adolescente' || p.tipo === 'adulto') {
         grupoExtra.style.display = 'block';
         document.getElementById('editTurma').value = p.turma || '';
 
@@ -296,7 +296,7 @@ async function salvarEdicao() {
 
     if (!body.nome) { showToast('Nome é obrigatório.', 'error'); return; }
 
-    if (tipo === 'catequizando' || tipo === 'adulto') {
+    if (tipo === 'criança / Adolescente' || tipo === 'adulto') {
         body.turma = document.getElementById('editTurma').value.trim();
         body.responsavel_codigo = document.getElementById('editResponsavel').value || null;
         const catId = document.getElementById('editCatequistaPatio').value;
