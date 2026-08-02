@@ -40,12 +40,20 @@
         }
 
         .logo .brand-icon {
-            width: 52px; height: 52px;
+            width: 90px; height: 90px;
             background: #eff6ff;
             border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
             font-size: 26px;
             margin: 0 auto 14px;
+            overflow: hidden;
+            padding: 6px;
+        }
+
+        .logo .brand-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .logo h1 {
@@ -141,7 +149,7 @@
         @media (max-width: 480px) {
             body { padding: 16px; align-items: flex-start; padding-top: 10vh; }
             .login-box { padding: 32px 22px; width: 100%; }
-            .logo .brand-icon { width: 46px; height: 46px; font-size: 22px; }
+            .logo .brand-icon { width: 90px; height: 90px; font-size: 22px; }
             .logo h1 { font-size: 19px; }
         }
     </style>
@@ -149,7 +157,7 @@
 <body>
     <div class="login-box">
         <div class="logo">
-            <div class="brand-icon">&#x1F514;</div>
+            <div class="brand-icon"><img src="static/Logo-Paróquia - Editado.png" alt="Logo Paróquia"></div>
             <h1>CATECONTROL</h1>
             <p>Sistema de Gestão de Catequese</p>
         </div>
