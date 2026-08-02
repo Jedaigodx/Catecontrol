@@ -79,6 +79,30 @@ class CatequistaPatio(db.Model):
         return {'id': self.id, 'nome': self.nome, 'ativo': self.ativo}
 
 
+class MonitorAutorizador(db.Model):
+    """
+    Pessoas com 'acesso tipo administrador' no leitor, usadas para liberação
+    excepcional de saída de menores quando o responsável cadastrado não está
+    presente (ex: catequista/monitor de plantão). Autenticam por nome + PIN.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), nullable=False, unique=True)
+    pin_hash = db.Column(db.String(200), nullable=False)
+    ativo = db.Column(db.Boolean, default=True)
+    criado_em = db.Column(db.DateTime(timezone=True), default=agora_brasilia)
+
+    def set_pin(self, pin: str):
+        from werkzeug.security import generate_password_hash
+        self.pin_hash = generate_password_hash(pin, method='pbkdf2:sha256', salt_length=16)
+
+    def check_pin(self, pin: str) -> bool:
+        from werkzeug.security import check_password_hash
+        return check_password_hash(self.pin_hash, pin)
+
+    def to_dict(self):
+        return {'id': self.id, 'nome': self.nome, 'ativo': self.ativo}
+
+
 class Pessoa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     codigo = db.Column(db.String(20), unique=True, nullable=False)
@@ -195,6 +219,27 @@ def pode_registrar(codigo):
         Registro.horario > trinta_seg_atras
     ).first() is None
 
+def calcular_carga_horaria_segundos(registros):
+    """
+    Recebe uma lista de Registro (qualquer ordem) e soma o tempo entre cada
+    par entrada -> saída consecutivo. Entradas sem saída correspondente
+    (pessoa ainda presente, ou saída não registrada) não são contabilizadas.
+    """
+    total = timedelta()
+    entrada_pendente = None
+    for r in sorted(registros, key=lambda x: x.horario):
+        if r.tipo == 'entrada':
+            entrada_pendente = r.horario
+        elif r.tipo == 'saida' and entrada_pendente is not None:
+            total += (r.horario - entrada_pendente)
+            entrada_pendente = None
+    return int(total.total_seconds())
+
+def formatar_carga_horaria(segundos: int) -> str:
+    horas = segundos // 3600
+    minutos = (segundos % 3600) // 60
+    return f'{horas}h {minutos:02d}min'
+
 def gerar_qr_base64(codigo):
     qr = qrcode.QRCode(version=1, box_size=8, border=4)
     qr.add_data(codigo)
@@ -290,6 +335,68 @@ def registrar():
 def atividade_recente():
     registros = Registro.query.order_by(Registro.horario.desc()).limit(10).all()
     return jsonify([r.to_dict() for r in registros])
+
+@app.route('/api/monitores_ativos')
+def api_monitores_ativos():
+    """Lista pública (sem PIN) para popular o seletor no leitor."""
+    monitores = MonitorAutorizador.query.filter_by(ativo=True).order_by(MonitorAutorizador.nome).all()
+    return jsonify([{'id': m.id, 'nome': m.nome} for m in monitores])
+
+@app.route('/api/registrar_excecao', methods=['POST'])
+def registrar_excecao():
+    """
+    Liberação excepcional de saída de um catequizando por um monitor
+    autorizado (acesso tipo administrador), usada quando o responsável
+    cadastrado não está presente para liberar a criança.
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'success': False, 'message': 'Requisição inválida.'}), 400
+
+    codigo = (data.get('codigo') or '').strip().upper()
+    monitor_id = data.get('monitor_id')
+    pin = (data.get('pin') or '').strip()
+
+    if not codigo or not monitor_id or not pin:
+        return jsonify({'success': False, 'message': 'Preencha o monitor e o PIN.'}), 400
+
+    pessoa = Pessoa.query.filter_by(codigo=codigo, ativo=True).first()
+    if not pessoa:
+        return jsonify({'success': False, 'message': 'QR Code não reconhecido ou pessoa inativa.'}), 404
+
+    monitor = MonitorAutorizador.query.filter_by(id=monitor_id, ativo=True).first()
+    if not monitor or not monitor.check_pin(pin):
+        return jsonify({'success': False, 'message': 'Monitor ou PIN inválido.'}), 403
+
+    ultimo = Registro.query.filter_by(pessoa_codigo=codigo).order_by(Registro.horario.desc()).first()
+    tipo_registro = 'entrada' if (ultimo is None or ultimo.tipo == 'saida') else 'saida'
+
+    if tipo_registro != 'saida':
+        return jsonify({'success': False, 'message': 'Esta pessoa não está com saída pendente.'}), 400
+
+    if not pode_registrar(codigo):
+        return jsonify({'success': False, 'message': 'Aguarde 30 segundos para registrar novamente.'}), 429
+
+    registro = Registro(
+        pessoa_codigo=codigo,
+        pessoa_nome=pessoa.nome,
+        tipo='saida',
+        autorizado_por=f'{monitor.nome} (Liberação excepcional)'
+    )
+    db.session.add(registro)
+    db.session.commit()
+    h = registro.horario
+    if h.tzinfo is None:
+        h = h.replace(tzinfo=BRASILIA_TZ)
+    else:
+        h = h.astimezone(BRASILIA_TZ)
+    return jsonify({
+        'success': True, 'tipo': 'saida',
+        'pessoa': pessoa.to_dict(),
+        'horario': h.strftime('%H:%M:%S'),
+        'autorizado_por': f'{monitor.nome} (Liberação excepcional)',
+        'message': f'Saída de {pessoa.nome} liberada excepcionalmente por {monitor.nome}.'
+    })
 
 # ─── ROTAS ADMIN ──────────────────────────────────────────────────────────────
 
@@ -497,11 +604,14 @@ def api_relatorio(codigo):
         return jsonify({'error': 'Formato de data inválido. Use YYYY-MM-DD'}), 400
 
     registros = query.order_by(Registro.horario.desc()).all()
+    carga_segundos = calcular_carga_horaria_segundos(registros)
     return jsonify({
         'pessoa': pessoa.to_dict(),
         'registros': [r.to_dict() for r in registros],
         'total_entradas': sum(1 for r in registros if r.tipo == 'entrada'),
-        'total_saidas': sum(1 for r in registros if r.tipo == 'saida')
+        'total_saidas': sum(1 for r in registros if r.tipo == 'saida'),
+        'carga_horaria_segundos': carga_segundos,
+        'carga_horaria_formatada': formatar_carga_horaria(carga_segundos)
     })
 
 @app.route('/api/admin/responsaveis')
@@ -534,6 +644,37 @@ def api_catequistas_patio():
 def api_deletar_catequista_patio(cid):
     c = CatequistaPatio.query.get_or_404(cid)
     c.ativo = False
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/admin/monitores', methods=['GET', 'POST'])
+@login_required
+def api_monitores():
+    if request.method == 'POST':
+        data = request.get_json(silent=True)
+        nome = (data.get('nome') or '').strip()
+        pin = (data.get('pin') or '').strip()
+        if not nome:
+            return jsonify({'success': False, 'message': 'Informe o nome.'}), 400
+        if not pin.isdigit() or not (4 <= len(pin) <= 6):
+            return jsonify({'success': False, 'message': 'O PIN deve ter entre 4 e 6 dígitos numéricos.'}), 400
+        existe = MonitorAutorizador.query.filter(MonitorAutorizador.nome.ilike(nome), MonitorAutorizador.ativo == True).first()
+        if existe:
+            return jsonify({'success': False, 'message': 'Já existe um monitor com esse nome.'}), 409
+        m = MonitorAutorizador(nome=nome)
+        m.set_pin(pin)
+        db.session.add(m)
+        db.session.commit()
+        return jsonify({'success': True, 'monitor': m.to_dict()})
+
+    lista = MonitorAutorizador.query.filter_by(ativo=True).order_by(MonitorAutorizador.nome).all()
+    return jsonify([m.to_dict() for m in lista])
+
+@app.route('/api/admin/monitores/<int:mid>', methods=['DELETE'])
+@login_required
+def api_deletar_monitor(mid):
+    m = MonitorAutorizador.query.get_or_404(mid)
+    m.ativo = False
     db.session.commit()
     return jsonify({'success': True})
 

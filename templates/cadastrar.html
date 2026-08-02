@@ -74,6 +74,7 @@
             <button class="tab-btn active" id="tabBtnCrianca" onclick="trocarAba('crianca')">Catequizando / Aluno</button>
             <button class="tab-btn" id="tabBtnResponsavel" onclick="trocarAba('responsavel')">Responsável</button>
             <button class="tab-btn" id="tabBtnCatequista" onclick="trocarAba('catequista')">Catequistas</button>
+            <button class="tab-btn" id="tabBtnMonitor" onclick="trocarAba('monitor')">Monitores</button>
         </div>
 
         <!-- ══════ ABA: CATEQUIZANDO ══════ -->
@@ -200,6 +201,41 @@
             </div>
         </div>
 
+        <!-- ══════ ABA: MONITORES (liberação excepcional) ══════ -->
+        <div class="tab-panel" id="panelMonitor">
+            <div class="card" style="margin-bottom:18px">
+                <h3 style="font-weight:700;margin-bottom:6px;font-size:15px">Adicionar Monitor Autorizador</h3>
+                <p class="hint" style="margin-bottom:14px">
+                    Monitores têm <strong>acesso tipo administrador</strong> no leitor: podem liberar a saída de um
+                    catequizando quando o responsável cadastrado não está presente. Cada um usa seu próprio PIN.
+                </p>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom:0">
+                        <label>Nome do Monitor</label>
+                        <input type="text" id="novoNomeMonitor" placeholder="Nome do monitor / catequista...">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label>PIN (4 a 6 dígitos)</label>
+                        <input type="password" inputmode="numeric" maxlength="6" id="novoPinMonitor" placeholder="••••"
+                               onkeypress="if(event.key==='Enter') adicionarMonitor()">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="adicionarMonitor()" style="width:100%;margin-top:14px">
+                    Adicionar Monitor
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center justify-between" style="margin-bottom:14px">
+                    <h3 style="font-weight:700;font-size:15px">Lista de Monitores</h3>
+                    <span id="contadorMonitores" style="font-size:11px;color:var(--text-muted);background:#f0f4ff;padding:3px 10px;border-radius:20px;font-weight:600">0 cadastrados</span>
+                </div>
+                <div id="listaMonitores">
+                    <div class="empty-cat"><p>Nenhum monitor cadastrado ainda.</p></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
@@ -208,6 +244,7 @@
 <script>
     let responsaveis = [];
     let catequistasPatio = [];
+    let monitores = [];
     let fotoBase64Crianca = null;
     let fotoBase64Resp = null;
 
@@ -224,19 +261,22 @@
     }
 
     async function init() {
-        const [resps, cats] = await Promise.all([
+        const [resps, cats, mons] = await Promise.all([
             apiSafe('/api/admin/responsaveis'),
-            apiSafe('/api/admin/catequistas_patio')
+            apiSafe('/api/admin/catequistas_patio'),
+            apiSafe('/api/admin/monitores')
         ]);
         responsaveis = resps || [];
         catequistasPatio = cats || [];
+        monitores = mons || [];
         preencherSelectResponsaveis();
         renderizarCatequistas();
         preencherSelectCatequistas();
+        renderizarMonitores();
     }
 
     function trocarAba(aba) {
-        ['crianca', 'responsavel', 'catequista'].forEach(a => {
+        ['crianca', 'responsavel', 'catequista', 'monitor'].forEach(a => {
             const elPanel = document.getElementById('panel' + a.charAt(0).toUpperCase() + a.slice(1));
             const elBtn = document.getElementById('tabBtn' + a.charAt(0).toUpperCase() + a.slice(1));
             if(elPanel) elPanel.classList.remove('active');
@@ -380,6 +420,45 @@
             <div class="catequista-item">
                 <span>${c.nome}</span>
                 <button class="del-btn" onclick="excluirCatequista(${c.id}, '${c.nome.replace(/'/g, "\\'")}')">✕</button>
+            </div>
+        `).join('');
+    }
+
+    async function adicionarMonitor() {
+        const nome = document.getElementById('novoNomeMonitor').value.trim();
+        const pin = document.getElementById('novoPinMonitor').value.trim();
+        if (!nome) { showToast('Informe o nome do monitor.', 'error'); return; }
+        if (!/^\d{4,6}$/.test(pin)) { showToast('O PIN deve ter entre 4 e 6 dígitos numéricos.', 'error'); return; }
+
+        const data = await apiSafe('/api/admin/monitores', { method: 'POST', body: JSON.stringify({ nome, pin }) });
+        if (data && data.success) {
+            monitores.push(data.monitor);
+            monitores.sort((a, b) => a.nome.localeCompare(b.nome));
+            renderizarMonitores();
+            document.getElementById('novoNomeMonitor').value = '';
+            document.getElementById('novoPinMonitor').value = '';
+            showToast(`${data.monitor.nome} adicionado como monitor!`, 'success');
+        }
+    }
+
+    async function excluirMonitor(id, nome) {
+        if (!confirm(`Remover "${nome}" da lista de monitores autorizados?`)) return;
+        const data = await apiSafe(`/api/admin/monitores/${id}`, { method: 'DELETE' });
+        if (data && data.success) {
+            monitores = monitores.filter(m => m.id !== id);
+            renderizarMonitores();
+            showToast(`${nome} removido.`, 'info');
+        }
+    }
+
+    function renderizarMonitores() {
+        const container = document.getElementById('listaMonitores');
+        document.getElementById('contadorMonitores').textContent = `${monitores.length} cadastrados`;
+        if (!monitores.length) { container.innerHTML = `<div class="empty-cat"><p>Nenhum monitor cadastrado ainda.</p></div>`; return; }
+        container.innerHTML = monitores.map(m => `
+            <div class="catequista-item">
+                <span>${m.nome}</span>
+                <button class="del-btn" onclick="excluirMonitor(${m.id}, '${m.nome.replace(/'/g, "\\'")}')">✕</button>
             </div>
         `).join('');
     }

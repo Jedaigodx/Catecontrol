@@ -38,14 +38,18 @@ catecontrol/
 
 ## 📱 Funcionalidades
 
-- ✅ Leitor QR via câmera (html5-qrcode)
+- ✅ Leitor QR via leitor USB/teclado **e** via câmera do celular (html5-qrcode), alternáveis na mesma tela
 - ✅ Entrada manual de código
 - ✅ Registro automático entrada/saída alternado
-- ✅ Delay de 1 min anti-duplicata
+- ✅ Delay anti-duplicata entre registros do mesmo código
 - ✅ Autorização de saída de menores via QR do responsável
+- ✅ **Liberação excepcional por monitor**: quando o responsável não está presente, um monitor/catequista cadastrado (nome + PIN) pode liberar a saída, com registro de quem autorizou
 - ✅ Dashboard com gráficos (Chart.js)
 - ✅ Cadastro com geração de QR Code imprimível
+- ✅ Cadastro e gerenciamento de Catequistas e de Monitores autorizadores
 - ✅ Edição de dados cadastrais
 - ✅ Desativação de pessoas (soft delete)
 - ✅ Relatórios por pessoa com filtro de período
-- ✅ Exportação CSV
+- ✅ **Contador de carga horária**: soma automaticamente o tempo entre entrada e saída de cada catequizando, para consolidar a quantidade de horas-aula no relatório
+- ✅ Exportação CSV (inclui a carga horária total)
+- ✅ Layout responsivo: menu lateral vira menu retrátil (hambúrguer) em celulares e tablets

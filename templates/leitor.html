@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <style>
         :root {
             --primary: #0f6be4;
@@ -31,6 +32,12 @@
 
         .header {
             width: 100%; max-width: 480px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+            flex-wrap: wrap; gap: 10px;
+        }
+
+        @media (max-width: 380px) {
+            body { padding: 12px; }
+            .brand h1 { font-size: 16px; }
         }
         .brand { display: flex; align-items: center; gap: 10px; }
         .brand .brand-icon { width: 38px; height: 38px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white;}
@@ -66,6 +73,43 @@
 
         .scanner-wrap { background: white; border-radius: 14px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 1px 8px rgba(15,23,42,0.07); margin-bottom: 14px; }
         .scanner-title { text-align: center; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 14px; letter-spacing: 0.3px; }
+
+        /* ── Mode toggle (USB reader vs. phone camera) ── */
+        .mode-toggle {
+            display: flex; gap: 4px; background: #eef2fb; border-radius: 12px; padding: 5px; margin-bottom: 14px;
+        }
+        .mode-btn {
+            flex: 1; padding: 10px 10px; border: none; border-radius: 8px; font-family: 'Josefin Sans', sans-serif;
+            font-size: 12.5px; font-weight: 700; cursor: pointer; background: transparent; color: #64748b; transition: all 0.15s;
+            letter-spacing: 0.2px;
+        }
+        .mode-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 10px rgba(15,107,228,0.3); }
+        .mode-panel { display: none; }
+        .mode-panel.active { display: block; }
+
+        #readerCamera { width: 100%; border-radius: 10px; overflow: hidden; }
+        .camera-hint { text-align: center; font-size: 11.5px; color: #94a3b8; margin-top: 10px; }
+        .camera-status { text-align: center; font-size: 12px; font-weight: 600; color: var(--primary-dark); margin-bottom: 10px; min-height: 16px; }
+
+        /* ── Liberação excepcional (monitor) ── */
+        .excecao-toggle {
+            width: 100%; margin-top: 12px; padding: 9px; background: #fff7ed; color: #c2410c; border: 1.5px dashed #fdba74;
+            border-radius: 8px; font-family: 'Josefin Sans', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;
+        }
+        .excecao-panel {
+            display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0; text-align: left;
+        }
+        .excecao-panel.open { display: block; }
+        .excecao-panel label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .excecao-panel select, .excecao-panel input {
+            width: 100%; padding: 9px 12px; margin-bottom: 10px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+            font-family: 'Josefin Sans', sans-serif; font-size: 13px; outline: none; background: #f8fafc; color: #1e293b;
+        }
+        .excecao-panel .btn-liberar {
+            width: 100%; padding: 10px; background: #c2410c; color: white; border: none; border-radius: 8px;
+            font-family: 'Josefin Sans', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer;
+        }
+        .excecao-erro { color: #dc2626; font-size: 11.5px; font-weight: 600; margin-top: -4px; margin-bottom: 8px; display: none; }
 
         .manual-input { display: flex; margin-top: 14px; border-radius: 8px; overflow: hidden; border: 1.5px solid #e2e8f0; }
         .manual-input input { flex: 1; padding: 11px 13px; font-family: 'Josefin Sans', sans-serif; font-size: 13px; border: none; outline: none; background: #f8fafc; color: #1e293b; }
@@ -103,19 +147,33 @@
 
     <div class="reader-container">
 
-        <!-- Scanner / Leitor USB -->
+        <!-- Alternância: Leitor USB x Câmera do Celular -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="modeBtnUsb" onclick="trocarModo('usb')">&#x1F5A5;&#xFE0F; Leitor USB</button>
+            <button class="mode-btn" id="modeBtnCamera" onclick="trocarModo('camera')">&#x1F4F1; Câmera do Celular</button>
+        </div>
+
+        <!-- Foto da pessoa em destaque (compartilhada entre os dois modos) -->
         <div class="scanner-wrap">
-            <div class="scanner-title">Aguardando leitura do leitor USB...</div>
-            
-            <!-- Foto da pessoa em destaque -->
             <div class="foto-container" id="fotoContainer">
                 <span style="color: #94a3b8; font-size: 13px;" id="fotoMsg">Aguardando...</span>
             </div>
 
-            <div class="manual-input">
-                <input type="text" id="manualCode" placeholder="Passe o código no leitor..." autofocus
-                    onkeypress="if(event.key==='Enter') registrarManual()">
-                <button onclick="registrarManual()">Registrar</button>
+            <!-- Modo Leitor USB / Teclado -->
+            <div class="mode-panel active" id="panelUsb">
+                <div class="scanner-title">Aguardando leitura do leitor USB...</div>
+                <div class="manual-input">
+                    <input type="text" id="manualCode" placeholder="Passe o código no leitor..." autofocus
+                        onkeypress="if(event.key==='Enter') registrarManual()">
+                    <button onclick="registrarManual()">Registrar</button>
+                </div>
+            </div>
+
+            <!-- Modo Câmera -->
+            <div class="mode-panel" id="panelCamera">
+                <div class="camera-status" id="cameraStatus">Toque em "Câmera do Celular" para ativar</div>
+                <div id="readerCamera"></div>
+                <p class="camera-hint">Aponte a câmera para o QR Code do catequizando ou responsável.</p>
             </div>
         </div>
 
@@ -134,6 +192,19 @@
             <p id="respMsg">Apresente o QR Code do responsável para autorizar a saída.</p>
             <div class="resp-nome" id="respNome"></div>
             <button class="cancel-btn" onclick="cancelarResposta()">Cancelar</button>
+
+            <button class="excecao-toggle" onclick="toggleExcecao()" id="btnToggleExcecao">
+                &#x26A0;&#xFE0F; Responsável não presente? Liberação por monitor
+            </button>
+            <div class="excecao-panel" id="excecaoPanel">
+                <label for="excecaoMonitor">Monitor / Catequista responsável pela liberação</label>
+                <select id="excecaoMonitor"><option value="">Carregando...</option></select>
+                <label for="excecaoPin">PIN do monitor</label>
+                <input type="password" inputmode="numeric" id="excecaoPin" placeholder="••••" maxlength="6"
+                    onkeypress="if(event.key==='Enter') liberarExcecao()">
+                <p class="excecao-erro" id="excecaoErro"></p>
+                <button class="btn-liberar" onclick="liberarExcecao()">Confirmar Liberação Excepcional</button>
+            </div>
         </div>
 
         <div class="atividade">
@@ -153,6 +224,52 @@
             }
         });
 
+        function aplicarFoto(data) {
+            const fotoContainer = document.getElementById('fotoContainer');
+            if (data.pessoa && data.pessoa.foto) {
+                fotoContainer.innerHTML = `<img src="${data.pessoa.foto}">`;
+                fotoContainer.style.border = "none";
+            } else {
+                fotoContainer.innerHTML = `<span style="color: #94a3b8; font-size: 13px;">Sem foto</span>`;
+                fotoContainer.style.border = "2px dashed #cbd5e1";
+            }
+        }
+
+        function exibirResultadoFinal(data) {
+            cancelarResposta();
+
+            const card = document.getElementById('resultCard');
+            const fotoContainer = document.getElementById('fotoContainer');
+            card.className = 'result-card ' + (data.success ? data.tipo : 'error');
+            card.style.display = 'block';
+
+            if (data.success) {
+                document.getElementById('resultIcon').textContent = data.tipo === 'entrada' ? '✓' : '←';
+                document.getElementById('resultTipo').textContent = data.tipo === 'entrada' ? 'ENTRADA REGISTRADA' : 'SAÍDA REGISTRADA';
+                document.getElementById('resultNome').textContent = data.pessoa.nome;
+                document.getElementById('resultCodigo').textContent = data.pessoa.codigo;
+                document.getElementById('resultHorario').textContent = data.horario;
+                document.getElementById('resultMsg').textContent = data.autorizado_por ? `Autorizado por: ${data.autorizado_por}` : '';
+            } else {
+                document.getElementById('resultIcon').textContent = '!';
+                document.getElementById('resultTipo').textContent = 'ATENÇÃO';
+                document.getElementById('resultNome').textContent = data.message;
+                document.getElementById('resultCodigo').textContent = '';
+                document.getElementById('resultHorario').textContent = '';
+                document.getElementById('resultMsg').textContent = '';
+            }
+
+            setTimeout(() => {
+                card.style.display = 'none';
+                processando = false;
+                // Volta o placeholder da foto
+                fotoContainer.innerHTML = `<span style="color: #94a3b8; font-size: 13px;">Aguardando...</span>`;
+                fotoContainer.style.border = "2px dashed #cbd5e1";
+            }, 4000);
+
+            carregarAtividade();
+        }
+
         async function registrar(codigo, codigoResponsavel = null) {
             if (processando) return;
             processando = true;
@@ -167,16 +284,8 @@
                     body: JSON.stringify(body)
                 });
                 const data = await res.json();
-                
-                // Tratar a foto
-                const fotoContainer = document.getElementById('fotoContainer');
-                if (data.pessoa && data.pessoa.foto) {
-                    fotoContainer.innerHTML = `<img src="${data.pessoa.foto}">`;
-                    fotoContainer.style.border = "none";
-                } else {
-                    fotoContainer.innerHTML = `<span style="color: #94a3b8; font-size: 13px;">Sem foto</span>`;
-                    fotoContainer.style.border = "2px dashed #cbd5e1";
-                }
+
+                aplicarFoto(data);
 
                 if (data.requer_responsavel) {
                     aguardandoResponsavel = codigo;
@@ -185,41 +294,12 @@
                     pending.style.display = 'block';
                     document.getElementById('respMsg').textContent = data.message;
                     document.getElementById('respNome').textContent = data.pessoa.nome;
+                    carregarMonitoresAtivos();
                     processando = false;
                     return;
                 }
 
-                cancelarResposta();
-
-                const card = document.getElementById('resultCard');
-                card.className = 'result-card ' + (data.success ? data.tipo : 'error');
-                card.style.display = 'block';
-
-                if (data.success) {
-                    document.getElementById('resultIcon').textContent = data.tipo === 'entrada' ? '✓' : '←';
-                    document.getElementById('resultTipo').textContent = data.tipo === 'entrada' ? 'ENTRADA REGISTRADA' : 'SAÍDA REGISTRADA';
-                    document.getElementById('resultNome').textContent = data.pessoa.nome;
-                    document.getElementById('resultCodigo').textContent = data.pessoa.codigo;
-                    document.getElementById('resultHorario').textContent = data.horario;
-                    document.getElementById('resultMsg').textContent = data.autorizado_por ? `Autorizado por: ${data.autorizado_por}` : '';
-                } else {
-                    document.getElementById('resultIcon').textContent = '!';
-                    document.getElementById('resultTipo').textContent = 'ATENÇÃO';
-                    document.getElementById('resultNome').textContent = data.message;
-                    document.getElementById('resultCodigo').textContent = '';
-                    document.getElementById('resultHorario').textContent = '';
-                    document.getElementById('resultMsg').textContent = '';
-                }
-
-                setTimeout(() => {
-                    card.style.display = 'none';
-                    processando = false;
-                    // Volta o placeholder da foto
-                    fotoContainer.innerHTML = `<span style="color: #94a3b8; font-size: 13px;">Aguardando...</span>`;
-                    fotoContainer.style.border = "2px dashed #cbd5e1";
-                }, 4000);
-
-                carregarAtividade();
+                exibirResultadoFinal(data);
             } catch (e) {
                 processando = false;
                 console.error('Erro ao registrar:', e);
@@ -242,9 +322,150 @@
         function cancelarResposta() {
             aguardandoResponsavel = null;
             document.getElementById('respPending').style.display = 'none';
+            document.getElementById('excecaoPanel').classList.remove('open');
+            document.getElementById('excecaoErro').style.display = 'none';
+            document.getElementById('excecaoPin').value = '';
             processando = false;
-            document.getElementById('manualCode').focus();
+            if (modoAtual === 'usb') {
+                document.getElementById('manualCode').focus();
+            }
         }
+
+        /* ══════════════ Liberação Excepcional (Monitor) ══════════════ */
+
+        let monitoresCarregados = false;
+
+        function toggleExcecao() {
+            const painel = document.getElementById('excecaoPanel');
+            painel.classList.toggle('open');
+        }
+
+        async function carregarMonitoresAtivos() {
+            if (monitoresCarregados) return;
+            try {
+                const monitores = await fetch('/api/monitores_ativos').then(r => r.json());
+                const sel = document.getElementById('excecaoMonitor');
+                sel.innerHTML = monitores.length
+                    ? '<option value="">— Selecione —</option>' + monitores.map(m => `<option value="${m.id}">${m.nome}</option>`).join('')
+                    : '<option value="">Nenhum monitor cadastrado</option>';
+                monitoresCarregados = true;
+            } catch (e) {
+                console.error('Erro ao carregar monitores:', e);
+            }
+        }
+
+        async function liberarExcecao() {
+            if (processando || !aguardandoResponsavel) return;
+
+            const monitorId = document.getElementById('excecaoMonitor').value;
+            const pin = document.getElementById('excecaoPin').value.trim();
+            const erroEl = document.getElementById('excecaoErro');
+            erroEl.style.display = 'none';
+
+            if (!monitorId) { erroEl.textContent = 'Selecione o monitor responsável.'; erroEl.style.display = 'block'; return; }
+            if (!pin) { erroEl.textContent = 'Informe o PIN do monitor.'; erroEl.style.display = 'block'; return; }
+
+            processando = true;
+            try {
+                const res = await fetch('/api/registrar_excecao', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codigo: aguardandoResponsavel, monitor_id: monitorId, pin })
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    erroEl.textContent = data.message || 'Não foi possível liberar.';
+                    erroEl.style.display = 'block';
+                    processando = false;
+                    return;
+                }
+
+                aplicarFoto(data);
+                exibirResultadoFinal(data);
+            } catch (e) {
+                processando = false;
+                console.error('Erro na liberação excepcional:', e);
+            }
+        }
+
+        /* ══════════════ Alternância Leitor USB x Câmera ══════════════ */
+
+        let modoAtual = 'usb';
+        let html5QrCode = null;
+        let ultimaLeituraCamera = { codigo: null, ts: 0 };
+
+        function trocarModo(modo) {
+            if (modo === modoAtual) return;
+            modoAtual = modo;
+
+            document.getElementById('modeBtnUsb').classList.toggle('active', modo === 'usb');
+            document.getElementById('modeBtnCamera').classList.toggle('active', modo === 'camera');
+            document.getElementById('panelUsb').classList.toggle('active', modo === 'usb');
+            document.getElementById('panelCamera').classList.toggle('active', modo === 'camera');
+
+            if (modo === 'camera') {
+                pararLeitorUsbFocus();
+                iniciarCamera();
+            } else {
+                pararCamera();
+                document.getElementById('manualCode').focus();
+            }
+        }
+
+        function pararLeitorUsbFocus() {
+            // Evita que o foco automático no input USB abra o teclado no celular
+        }
+
+        function iniciarCamera() {
+            const statusEl = document.getElementById('cameraStatus');
+            if (typeof Html5Qrcode === 'undefined') {
+                statusEl.textContent = 'Não foi possível carregar o leitor de câmera. Verifique sua conexão.';
+                return;
+            }
+            statusEl.textContent = 'Ativando câmera...';
+            html5QrCode = new Html5Qrcode('readerCamera');
+            const config = { fps: 10, qrbox: { width: 240, height: 240 } };
+
+            html5QrCode.start(
+                { facingMode: 'environment' },
+                config,
+                (decodedText) => onLeituraCamera(decodedText),
+                () => {} // erro de leitura por frame; ignorado silenciosamente
+            ).then(() => {
+                statusEl.textContent = 'Câmera ativa — aponte para o QR Code';
+            }).catch((err) => {
+                console.error('Erro ao iniciar câmera:', err);
+                statusEl.textContent = 'Não foi possível acessar a câmera. Verifique as permissões do navegador.';
+            });
+        }
+
+        function pararCamera() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+                html5QrCode = null;
+            }
+            document.getElementById('cameraStatus').textContent = 'Toque em "Câmera do Celular" para ativar';
+        }
+
+        function onLeituraCamera(decodedText) {
+            const codigo = decodedText.trim().toUpperCase();
+            const agora = Date.now();
+            // Debounce: evita registrar o mesmo código várias vezes seguidas
+            // enquanto a câmera continua enxergando o mesmo QR Code.
+            if (codigo === ultimaLeituraCamera.codigo && (agora - ultimaLeituraCamera.ts) < 4000) {
+                return;
+            }
+            ultimaLeituraCamera = { codigo, ts: agora };
+
+            if (aguardandoResponsavel) {
+                registrar(aguardandoResponsavel, codigo);
+            } else {
+                registrar(codigo);
+            }
+        }
+
+        window.addEventListener('beforeunload', pararCamera);
 
         async function carregarAtividade() {
             try {

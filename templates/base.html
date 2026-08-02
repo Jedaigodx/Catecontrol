@@ -447,21 +447,133 @@
             color: var(--text-muted);
         }
 
+        /* ── Mobile topbar (hidden on desktop) ── */
+        .mobile-topbar {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            background: var(--primary-light);
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+            z-index: 200;
+            box-shadow: 0 1px 8px rgba(15,23,42,0.15);
+        }
+
+        .mobile-topbar .brand-mini {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .hamburger-btn, .mobile-logout-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 38px; height: 38px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.5);
+            z-index: 150;
+        }
+
+        .sidebar-overlay.open { display: block; }
+
+        /* ── Responsive breakpoints ── */
         @media (max-width: 900px) {
-            .sidebar { width: 200px; }
-            .main-content { margin-left: 200px; padding: 18px; }
+            .mobile-topbar { display: flex; }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                top: 56px;
+                width: 240px;
+                z-index: 200;
+                box-shadow: 4px 0 24px rgba(15,23,42,0.25);
+            }
+
+            .sidebar.open { transform: translateX(0); }
+
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+                padding-top: 72px;
+            }
+
             .stat-cards { grid-template-columns: repeat(2, 1fr); }
+            .grid-2 { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+
+            .page-header.flex,
+            .page-header .flex {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 10px;
+            }
+
+            .modal { width: 92vw; padding: 20px; }
+        }
+
+        @media (max-width: 560px) {
+            .stat-cards { grid-template-columns: 1fr; }
+            .main-content { padding: 12px; padding-top: 68px; }
+            .stat-value { font-size: 24px; }
+            .card { padding: 16px; }
+            table { font-size: 12px; }
+            th, td { padding: 9px 8px; }
         }
     </style>
     {% block head %}{% endblock %}
 </head>
 
 <body>
+    <div class="mobile-topbar" id="mobileTopbar">
+        <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+        <div class="brand-mini"><span>&#x1F514;</span> CATECONTROL</div>
+        <button class="mobile-logout-btn" onclick="window.location='/logout'" title="Sair">&#9211;</button>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     {% block body %}{% endblock %}
 
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (!sidebar) return;
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        // Fecha o menu mobile automaticamente ao navegar
+        document.querySelectorAll('.sidebar .nav-item').forEach(a => {
+            a.addEventListener('click', () => {
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (sidebar && sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('open');
+                }
+            });
+        });
+
         function showToast(message, type = 'info', duration = 3500) {
             const container = document.getElementById('toastContainer');
             const icons = { success: '✓', error: '✕', info: 'i' };
