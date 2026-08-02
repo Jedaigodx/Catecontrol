@@ -557,7 +557,7 @@
 <body>
     <div class="mobile-topbar" id="mobileTopbar">
         <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
-        <div class="brand-mini"><img src="static/Logo-Paróquia - Editado.png" alt="Logo Paróquia"> CATECONTROL</div>
+        <div class="brand-mini"><img src="{{ url_for('static',filename='Logo_paroquia.png')}}" alt="Logo Paróquia"> CATECONTROL</div>
         <button class="mobile-logout-btn" onclick="window.location='/logout'" title="Sair">&#9211;</button>
     </div>
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
