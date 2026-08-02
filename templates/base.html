@@ -470,6 +470,7 @@
             font-size: 14px;
             letter-spacing: 0.5px;
         }
+        .brand-mini img{ width: 100%; height: 100%;object-fit: contain;}
 
         .hamburger-btn, .mobile-logout-btn {
             background: rgba(255,255,255,0.15);
@@ -544,7 +545,7 @@
 <body>
     <div class="mobile-topbar" id="mobileTopbar">
         <button class="hamburger-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
-        <div class="brand-mini"><span>&#x1F514;</span> CATECONTROL</div>
+        <div class="brand-mini"><img src="static/Logo-Paróquia - Editado.png" alt="Logo-Paróquia"> CATECONTROL</div>
         <button class="mobile-logout-btn" onclick="window.location='/logout'" title="Sair">&#9211;</button>
     </div>
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
