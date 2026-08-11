@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta, date
 from zoneinfo import ZoneInfo
+from openpyxl import load_workbook
 import qrcode
 import io
 import base64
@@ -441,6 +442,11 @@ def pessoas():
 def cadastrar():
     return render_template('cadastrar.html')
 
+@app.route('/admin/importar')
+@login_required
+def importar():
+    return render_template('importar.html')
+
 @app.route('/admin/relatorios')
 @login_required
 def relatorios():
@@ -490,6 +496,99 @@ def api_pessoas():
     if q:
         query = query.filter((Pessoa.nome.ilike(f'%{q}%')) | (Pessoa.codigo.ilike(f'%{q}%')))
     return jsonify([p.to_dict() for p in query.order_by(Pessoa.nome).all()])
+
+@app.route('/api/admin/importar-pessoas', methods=['POST'])
+@login_required
+def api_importar_pessoas():
+    """Importa múltiplas pessoas de um arquivo Excel"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Nenhum arquivo enviado'}), 400
+    
+    file = request.files['file']
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        return jsonify({'success': False, 'message': 'Arquivo deve ser .xlsx ou .xls'}), 400
+    
+    try:
+        workbook = load_workbook(file)
+        worksheet = workbook.active
+        
+        resultado = {
+            'total_processado': 0,
+            'total_sucesso': 0,
+            'total_erro': 0,
+            'pessoas_criadas': [],
+            'erros': []
+        }
+        
+        # Pular cabeçalho (linha 1)
+        for idx, row in enumerate(worksheet.iter_rows(values_only=True), start=1):
+            if idx == 1:  # cabeçalho
+                continue
+            
+            try:
+                resultado['total_processado'] += 1
+                
+                # Extrair dados
+                nome_raw = (row[0] or '').strip()
+                tipo_base = (row[1] or 'catequizando').strip().lower()
+                responsavel_codigo = (row[2] or '').strip().upper() or None
+                telefone = (row[3] or '').strip() or None
+                email = (row[4] or '').strip() or None
+                data_nascimento = row[5] if row[5] else None
+                turma = (row[6] or '').strip() or None
+                catequista_id = int(row[7]) if row[7] else None
+                
+                # Validar nome
+                if not nome_raw:
+                    resultado['erros'].append({'linha': idx, 'erro': 'Nome é obrigatório'})
+                    resultado['total_erro'] += 1
+                    continue
+                
+                nome = normalizar_nome(nome_raw)
+                
+                # Verificar duplicação
+                duplicado = Pessoa.query.filter(db.func.upper(Pessoa.nome) == nome, Pessoa.ativo == True).first()
+                if duplicado:
+                    resultado['erros'].append({'linha': idx, 'erro': f'Nome já existe: {nome}'})
+                    resultado['total_erro'] += 1
+                    continue
+                
+                # Calcular tipo por idade
+                tipo_final = calcular_tipo_por_idade(str(data_nascimento)) if tipo_base == 'catequizando' else 'responsavel'
+                
+                # Gerar código
+                codigo = gerar_codigo(tipo_final)
+                
+                # Criar pessoa
+                pessoa = Pessoa(
+                    codigo=codigo,
+                    nome=nome,
+                    tipo=tipo_final,
+                    responsavel_codigo=responsavel_codigo,
+                    telefone=telefone[:20] if telefone else None,
+                    email=email[:120] if email else None,
+                    data_nascimento=data_nascimento,
+                    turma=turma[:80] if turma else None,
+                    catequista_patio_id=catequista_id if tipo_base == 'catequizando' else None,
+                    foto=None
+                )
+                
+                db.session.add(pessoa)
+                db.session.flush()
+                
+                resultado['pessoas_criadas'].append({'codigo': codigo, 'nome': nome})
+                resultado['total_sucesso'] += 1
+                
+            except Exception as e:
+                resultado['erros'].append({'linha': idx, 'erro': str(e)})
+                resultado['total_erro'] += 1
+        
+        db.session.commit()
+        return jsonify({'success': True, **resultado})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro ao processar arquivo: {str(e)}'}), 500
 
 @app.route('/api/admin/pessoas', methods=['POST'])
 @login_required
