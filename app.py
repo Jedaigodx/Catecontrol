@@ -24,9 +24,11 @@ app = Flask(__name__)
 
 secret_key = os.getenv("SECRET_KEY")
 if not secret_key:
-    raise RuntimeError(
-        "Variável de ambiente SECRET_KEY não definida. "
-        "Defina no Railway antes de iniciar a aplicação."
+    secret_key = secrets.token_hex(32)
+    print(
+        "AVISO: Variável de ambiente SECRET_KEY não definida. "
+        "Uma chave secreta temporária foi gerada automaticamente. "
+        "Defina SECRET_KEY no Railway para manter as sessões válidas entre reinicializações."
     )
 app.config['SECRET_KEY'] = secret_key
 app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -183,7 +185,12 @@ with app.app_context():
     if not Admin.query.filter_by(username="admin").first():
         senha_inicial = os.getenv("ADMIN_INITIAL_PASSWORD")
         if not senha_inicial:
-            raise RuntimeError("Variável ADMIN_INITIAL_PASSWORD não definida.")
+            senha_inicial = secrets.token_hex(16)
+            print(
+                "AVISO: Variável de ambiente ADMIN_INITIAL_PASSWORD não definida. "
+                f"Uma senha temporária foi gerada para o usuário 'admin': {senha_inicial} "
+                "Defina ADMIN_INITIAL_PASSWORD no Railway e altere a senha após o primeiro login."
+            )
         novo_admin = Admin(username="admin")
         novo_admin.set_password(senha_inicial)
         db.session.add(novo_admin)
