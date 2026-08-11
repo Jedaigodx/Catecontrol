@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Importar - CateControl{% endblock %}
+
+{% block head %}
+<style>
+    .upload-box {
+        border: 2px dashed var(--border);
+        border-radius: var(--radius);
+        padding: 40px 20px;
+        text-align: center;
+        transition: border-color 0.15s, background 0.15s;
+        cursor: pointer;
+    }
+    .upload-box:hover, .upload-box.dragover {
+        border-color: var(--primary);
+        background: #f0f6ff;
+    }
+    .upload-box p { color: var(--text-muted); font-size: 13px; margin-top: 8px; }
+    .upload-icon { font-size: 32px; color: var(--primary); }
+    .file-name { margin-top: 10px; font-weight: 600; font-size: 13px; color: var(--text); }
+    .hint { font-size: 11px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+    .hint strong { color: var(--primary); }
+    .resultado-box { margin-top: 18px; }
+    .resultado-stats { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .resultado-stat { flex: 1; min-width: 110px; padding: 12px; border-radius: 10px; text-align: center; }
+    .resultado-stat .valor { font-size: 22px; font-weight: 700; }
+    .resultado-stat .label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .stat-total { background: #eff6ff; }
+    .stat-sucesso { background: #ecfdf5; }
+    .stat-erro { background: #fef2f2; }
+    .erro-item {
+        padding: 8px 12px; border-radius: 8px; background: #fef2f2; color: #b91c1c;
+        font-size: 12px; margin-bottom: 6px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon"><img src="{{ url_for('static', filename='Logo_paroquia.png') }}" alt="Logo Paróquia"></div>
+        <div>
+            <h1>CATECONTROL</h1>
+            <p>Paróquia Sagrado Coração de Jesus</p>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a class="nav-item" href="/admin"><span class="nav-icon">▦</span> Dashboard</a>
+        <a class="nav-item" href="/admin/pessoas"><span class="nav-icon">◉</span> Pessoas</a>
+        <a class="nav-item" href="/admin/cadastrar"><span class="nav-icon">＋</span> Cadastrar</a>
+        <a class="nav-item active" href="/admin/importar"><span class="nav-icon">⇪</span> Importar</a>
+        <a class="nav-item" href="/admin/relatorios"><span class="nav-icon">≡</span> Relatórios</a>
+        <a class="nav-item" href="/"><span class="nav-icon">◎</span> Leitor QR</a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="admin-info">
+            <div class="admin-avatar">A</div>
+            <div>
+                <span class="admin-name">Admin</span>
+                <small class="admin-role">Administrador</small>
+            </div>
+            <button class="logout-btn" onclick="window.location='/logout'" title="Sair">⏻</button>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="page-header">
+        <h2>IMPORTAR PESSOAS</h2>
+        <p>Importe múltiplos catequizandos ou responsáveis de uma vez a partir de uma planilha Excel</p>
+    </div>
+
+    <div style="max-width:680px; margin: 0 auto;">
+        <div class="card">
+            <h3 style="font-weight:700;margin-bottom:14px;font-size:15px">Selecionar arquivo</h3>
+
+            <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">⇪</div>
+                <p><strong>Clique para selecionar</strong> ou arraste o arquivo aqui</p>
+                <div class="file-name" id="fileName"></div>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="onFileSelected(event)">
+            </div>
+
+            <p class="hint">
+                O arquivo deve ser <strong>.xlsx</strong> ou <strong>.xls</strong>, com cabeçalho na primeira linha e colunas na ordem:
+                Nome, Tipo (catequizando/responsavel), Código do Responsável, Telefone, E-mail, Data de Nascimento, Turma, ID do Catequista.
+            </p>
+
+            <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px;margin-top:18px" id="btnImportar" onclick="importarArquivo()" disabled>
+                Importar Pessoas
+            </button>
+        </div>
+
+        <div class="card resultado-box" id="resultadoImportacao" style="display:none;margin-top:18px">
+            <h3 style="font-weight:700;margin-bottom:14px;font-size:15px">Resultado da Importação</h3>
+            <div class="resultado-stats">
+                <div class="resultado-stat stat-total">
+                    <div class="valor" id="resTotal">0</div>
+                    <div class="label">Processados</div>
+                </div>
+                <div class="resultado-stat stat-sucesso">
+                    <div class="valor" id="resSucesso">0</div>
+                    <div class="label">Importados</div>
+                </div>
+                <div class="resultado-stat stat-erro">
+                    <div class="valor" id="resErro">0</div>
+                    <div class="label">Erros</div>
+                </div>
+            </div>
+            <div id="listaErros"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let arquivoSelecionado = null;
+
+    function onFileSelected(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        arquivoSelecionado = file;
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('btnImportar').disabled = false;
+    }
+
+    async function importarArquivo() {
+        if (!arquivoSelecionado) { showToast('Selecione um arquivo primeiro.', 'error'); return; }
+
+        const formData = new FormData();
+        formData.append('file', arquivoSelecionado);
+
+        const btn = document.getElementById('btnImportar');
+        btn.disabled = true;
+        btn.textContent = 'Importando...';
+
+        try {
+            const res = await fetch('/api/admin/importar-pessoas', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                showToast(data.message || 'Erro ao importar arquivo.', 'error');
+                return;
+            }
+
+            document.getElementById('resTotal').textContent = data.total_processado;
+            document.getElementById('resSucesso').textContent = data.total_sucesso;
+            document.getElementById('resErro').textContent = data.total_erro;
+
+            const listaErros = document.getElementById('listaErros');
+            listaErros.innerHTML = (data.erros || [])
+                .map(e => `<div class="erro-item">Linha ${e.linha}: ${e.erro}</div>`)
+                .join('');
+
+            document.getElementById('resultadoImportacao').style.display = 'block';
+            document.getElementById('resultadoImportacao').scrollIntoView({ behavior: 'smooth' });
+
+            showToast(`${data.total_sucesso} pessoa(s) importada(s) com sucesso!`, 'success');
+        } catch (err) {
+            showToast('Falha na comunicação com o servidor.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Importar Pessoas';
+        }
+    }
+</script>
+{% endblock %}
