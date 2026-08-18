@@ -617,8 +617,14 @@ def api_relatorio(codigo):
 @app.route('/api/admin/responsaveis')
 @login_required
 def api_responsaveis():
-    resp = Pessoa.query.filter_by(tipo='responsavel', ativo=True).order_by(Pessoa.nome).all()
-    return jsonify([{'codigo': p.codigo, 'nome': p.nome} for p in resp])
+    # Inclui tipo 'responsavel' (cadastro exclusivo de responsável) e também
+    # 'adulto' (ex: um catequizando adulto que também é responsável por um
+    # menor vinculado) — assim a mesma pessoa usa um único QR/crachá, sem
+    # precisar de um segundo cadastro só para liberar a saída de um menor.
+    resp = Pessoa.query.filter(
+        Pessoa.tipo.in_(['responsavel', 'adulto']), Pessoa.ativo == True
+    ).order_by(Pessoa.nome).all()
+    return jsonify([{'codigo': p.codigo, 'nome': p.nome, 'telefone': p.telefone, 'tipo': p.tipo} for p in resp])
 
 @app.route('/api/admin/catequistas_patio', methods=['GET', 'POST'])
 @login_required

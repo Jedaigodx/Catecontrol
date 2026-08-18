@@ -48,7 +48,7 @@
                 <select id="filtroTipo" onchange="buscar()"
                     style="padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'Josefin Sans',sans-serif;font-size:13px;outline:none;cursor:pointer;background:white;color:var(--text)">
                     <option value="">Todos os tipos</option>
-                    <option value="criança / Adolescente">Catequizando / Aluno</option>
+                    <option value="catequizando">Catequizando / Aluno</option>
                     <option value="adulto">Adulto</option>
                     <option value="responsavel">Responsável</option>
                 </select>
@@ -131,6 +131,40 @@
     </div>
 </div>
 
+<!-- ── Modal Ver / Sobre ── -->
+<div class="modal-overlay" id="modalVer">
+    <div class="modal" style="width:480px">
+        <div class="modal-header">
+            <h3>Sobre</h3>
+            <button class="modal-close" onclick="fecharModalVer()">✕</button>
+        </div>
+        <div style="display:flex; gap:15px; align-items:center; margin-bottom:18px">
+            <img id="verFoto" style="width:64px; height:64px; border-radius:50%; object-fit:cover; background:#f1f5f9;">
+            <div>
+                <div style="font-weight:700; font-size:16px; text-transform:uppercase" id="verNome"></div>
+                <div class="mono text-muted" style="font-size:12px" id="verCodigo"></div>
+                <span class="badge" id="verTipoBadge" style="margin-top:4px;display:inline-block"></span>
+            </div>
+        </div>
+
+        <div id="verCamposGerais" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; font-size:13px"></div>
+
+        <div id="verBlocoResponsavel" style="display:none; background:#f8fafc; border-radius:10px; padding:12px 14px; margin-bottom:10px">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px">Responsável Vinculado</div>
+            <div id="verResponsavelInfo" style="font-size:13px"></div>
+        </div>
+
+        <div id="verBlocoCriancas" style="display:none; background:#f8fafc; border-radius:10px; padding:12px 14px">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px">Catequizandos / Adultos Vinculados</div>
+            <div id="verCriancasLista" style="font-size:13px; display:flex; flex-direction:column; gap:6px"></div>
+        </div>
+
+        <div class="flex gap-2" style="margin-top:16px">
+            <button class="btn btn-outline" style="flex:1" onclick="fecharModalVer()">Fechar</button>
+        </div>
+    </div>
+</div>
+
 <!-- ── Modal QR Code ── -->
 <div class="modal-overlay" id="modalQR">
     <div class="modal" style="text-align:center;max-width:340px">
@@ -202,6 +236,7 @@ function renderizar(pessoas) {
             <td style="font-size:13px">${p.telefone || '—'}</td>
             <td>
                 <div class="flex gap-2">
+                    <button class="btn btn-sm btn-outline" onclick='abrirVisualizar(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Ver</button>
                     <button class="btn btn-sm btn-outline" onclick="abrirQR('${p.codigo}','${p.nome.replace(/'/g,"\\'")}','${(p.turma||'').replace(/'/g,"\\'")}')">QR</button>
                     <button class="btn btn-sm btn-primary" onclick='abrirEditar(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Editar</button>
                     <button class="btn btn-sm btn-danger" onclick="deletar(${p.id},'${p.nome.replace(/'/g,"\\'")}')">Remover</button>
@@ -235,13 +270,13 @@ function abrirEditar(p) {
     document.getElementById('editFotoPreview').src = fotoAtualEdit || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 
     const grupoExtra = document.getElementById('groupCrianca');
-    if (p.tipo === 'criança / Adolescente' || p.tipo === 'adulto') {
+    if (p.tipo === 'catequizando' || p.tipo === 'adulto') {
         grupoExtra.style.display = 'block';
         document.getElementById('editTurma').value = p.turma || '';
 
         const selResp = document.getElementById('editResponsavel');
         selResp.innerHTML = '<option value="">— Nenhum —</option>' +
-            responsaveis.map(r => `<option value="${r.codigo}" ${r.codigo === p.responsavel_codigo ? 'selected' : ''}>${r.nome} (${r.codigo})</option>`).join('');
+            responsaveis.map(r => `<option value="${r.codigo}" ${r.codigo === p.responsavel_codigo ? 'selected' : ''}>${r.nome} (${r.codigo})${r.tipo === 'adulto' ? ' — Adulto/Catequizando' : ''}</option>`).join('');
 
         const selCat = document.getElementById('editCatequistaPatio');
         selCat.innerHTML = '<option value="">— Nenhum —</option>' +
@@ -281,6 +316,61 @@ function removerFotoEdit() {
 
 function fecharModal() { document.getElementById('modalEditar').classList.remove('open'); }
 
+function abrirVisualizar(p) {
+    document.getElementById('verFoto').src = p.foto || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+    document.getElementById('verNome').textContent = p.nome;
+    document.getElementById('verCodigo').textContent = p.codigo;
+
+    const badge = document.getElementById('verTipoBadge');
+    badge.className = `badge badge-${p.tipo}`;
+    badge.textContent = tipoLabel(p.tipo);
+
+    const gerais = document.getElementById('verCamposGerais');
+    const linha = (label, valor) => `<div><div style="color:var(--text-muted);font-size:11px;text-transform:uppercase;font-weight:600">${label}</div><div>${valor || '—'}</div></div>`;
+    let camposHtml = linha('Telefone', p.telefone) + linha('E-mail', p.email) + linha('Data Nasc.', p.data_nascimento);
+    if (p.tipo !== 'responsavel') {
+        camposHtml += linha('Turma', p.turma) + linha('Catequista', p.catequista_patio_nome);
+    }
+    gerais.innerHTML = camposHtml;
+
+    const blocoResp = document.getElementById('verBlocoResponsavel');
+    const blocoCriancas = document.getElementById('verBlocoCriancas');
+    blocoResp.style.display = 'none';
+    blocoCriancas.style.display = 'none';
+
+    // Vínculo com o próprio responsável (para catequizando/adulto menor de idade
+    // ou adulto que também tenha um responsável cadastrado)
+    if (p.tipo === 'catequizando' || p.tipo === 'adulto') {
+        const resp = responsaveis.find(r => r.codigo === p.responsavel_codigo);
+        if (resp || p.tipo === 'catequizando') {
+            blocoResp.style.display = 'block';
+            document.getElementById('verResponsavelInfo').innerHTML = resp
+                ? `<strong style="text-transform:uppercase">${resp.nome}</strong> <span class="mono text-muted" style="font-size:12px">(${resp.codigo})</span>${resp.telefone ? `<br><span style="color:var(--text-muted)">${resp.telefone}</span>` : ''}`
+                : '<span class="text-muted">Nenhum responsável vinculado.</span>';
+        }
+    }
+
+    // Crianças/pessoas das quais esta pessoa é responsável — vale tanto para
+    // quem foi cadastrado só como 'responsavel' quanto para um adulto que
+    // também é catequizando e usa o mesmo crachá para liberar um menor vinculado
+    if (p.tipo === 'responsavel' || p.tipo === 'adulto') {
+        const vinculados = todasPessoas.filter(x => x.responsavel_codigo === p.codigo);
+        if (vinculados.length || p.tipo === 'responsavel') {
+            blocoCriancas.style.display = 'block';
+            document.getElementById('verCriancasLista').innerHTML = vinculados.length
+                ? vinculados.map(v => `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+                        <span style="text-transform:uppercase;font-weight:600">${v.nome}</span>
+                        <span class="mono text-muted" style="font-size:11px">${v.codigo}${v.turma ? ' · ' + v.turma : ''}</span>
+                    </div>`).join('')
+                : '<span class="text-muted">Nenhum catequizando/adulto vinculado a este responsável.</span>';
+        }
+    }
+
+    document.getElementById('modalVer').classList.add('open');
+}
+
+function fecharModalVer() { document.getElementById('modalVer').classList.remove('open'); }
+
 async function salvarEdicao() {
     const id = document.getElementById('editId').value;
     const tipo = document.getElementById('editTipo').value;
@@ -296,7 +386,7 @@ async function salvarEdicao() {
 
     if (!body.nome) { showToast('Nome é obrigatório.', 'error'); return; }
 
-    if (tipo === 'criança / Adolescente' || tipo === 'adulto') {
+    if (tipo === 'catequizando' || tipo === 'adulto') {
         body.turma = document.getElementById('editTurma').value.trim();
         body.responsavel_codigo = document.getElementById('editResponsavel').value || null;
         const catId = document.getElementById('editCatequistaPatio').value;

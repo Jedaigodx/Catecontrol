@@ -289,7 +289,7 @@
     function preencherSelectResponsaveis() {
         const sel = document.getElementById('c_responsavel');
         sel.innerHTML = '<option value="">— Selecione (opcional) —</option>' +
-            responsaveis.map(r => `<option value="${r.codigo}">${r.nome} (${r.codigo})</option>`).join('');
+            responsaveis.map(r => `<option value="${r.codigo}">${r.nome} (${r.codigo})${r.tipo === 'adulto' ? ' — Adulto/Catequizando' : ''}</option>`).join('');
     }
 
     function preencherSelectCatequistas() {
